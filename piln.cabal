@@ -1,0 +1,51 @@
+-- This file has been generated from package.yaml by hpack version 0.28.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e1b4f2f5a4fd28bbbbda77b23bd42b7c47959b0e40dc6e521c439a337d0e7465
+
+name:           piln
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/piln#readme>
+homepage:       https://github.com/githubuser/piln#readme
+bug-reports:    https://github.com/githubuser/piln/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2018 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+extra-source-files:
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/piln
+
+executable piln-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_piln
+    , Lightning
+    , Database
+    , IPFS
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , scotty
+    , lens
+    , wreq
+    , contravariant
+    , aeson
+    , time
+    , lens-aeson
+    , hasql
+    , bytestring
+    , text
+    , http-types
+    , wai-extra
+    , wai-middleware-static
+    , wai-cors
+  default-language: Haskell2010

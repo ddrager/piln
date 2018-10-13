@@ -20,17 +20,17 @@ getObjects = Statement sql encoder decoder False
     = "\
 \ select array_to_json(array_agg(row_to_json(o))) as objects \
 \ from ( \
-\   select cid, ending_at, array_to_json(notes) from objects \
+\   select cid, ending_at, notes from objects \
 \ ) as o \
 \ "
   encoder = Encoders.unit
   decoder = Decoders.singleRow (Decoders.column Decoders.json)
 
-data Payment = Payment { _opennode_id :: S.Text
-                       , _cid :: S.Text
-                       , _amount :: Int64
-                       , _time_bought :: DiffTime
-                       , _note :: S.Text
+data Payment = Payment { opennode_id :: S.Text
+                       , cid :: S.Text
+                       , amount :: Int64
+                       , time_bought :: DiffTime
+                       , note :: S.Text
                        }
 
 savePayment :: Statement Payment ()
@@ -51,9 +51,9 @@ savePayment = Statement sql encoder decoder False
 \ ), $5) \
 \ "
   encoder =
-    (_opennode_id >$< Encoders.param Encoders.text)
-      <> (_cid >$< Encoders.param Encoders.text)
-      <> (_amount >$< Encoders.param Encoders.int8)
-      <> (_time_bought >$< Encoders.param Encoders.interval)
-      <> (_note >$< Encoders.param Encoders.text)
+    (opennode_id >$< Encoders.param Encoders.text)
+      <> (cid >$< Encoders.param Encoders.text)
+      <> (amount >$< Encoders.param Encoders.int8)
+      <> (time_bought >$< Encoders.param Encoders.interval)
+      <> (note >$< Encoders.param Encoders.text)
   decoder = Decoders.unit

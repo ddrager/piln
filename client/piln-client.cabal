@@ -1,0 +1,34 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: fb5cc29f38242afd6a9be828559980cada3ea4e6c5a0e39643ca95acdda22bcc
+
+name:           piln-client
+version:        0.1.0.0
+description:    Please see the README on Github at <https://github.com/fiatjaf/piln-client#readme>
+homepage:       https://github.com/fiatjaf/piln-client#readme
+bug-reports:    https://github.com/fiatjaf/piln-client/issues
+author:         Giovanni T. Parra
+maintainer:     fiatjaf@gmail.com
+copyright:      Giovanni T. Parra
+license:        BSD3
+build-type:     Simple
+cabal-version:  >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/fiatjaf/piln-client
+
+executable piln-client-exe
+  main-is: Main.hs
+  hs-source-dirs:
+      client
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , ghcjs-base
+    , miso
+    , aeson
+    , text
+  default-language: Haskell2010

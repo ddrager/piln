@@ -1,0 +1,1 @@
+../../client/.stack-work/dist/x86_64-linux/Cabal-1.24.2.0_ghcjs/build/piln-client-exe/piln-client-exe.jsexe/rts.js

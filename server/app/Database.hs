@@ -26,7 +26,7 @@ getObjects = Statement sql encoder decoder False
   encoder = Encoders.unit
   decoder = Decoders.singleRow (Decoders.column Decoders.json)
 
-data Payment = Payment { opennode_id :: S.Text
+data Payment = Payment { order_id :: S.Text
                        , cid :: S.Text
                        , amount :: Int64
                        , time_bought :: DiffTime
@@ -39,7 +39,7 @@ savePayment = Statement sql encoder decoder False
   sql
     = "\
 \ insert into payments \
-\ (opennode_id, cid, amount, time_bought, actual_start, note) \
+\ (order_id, cid, amount, time_bought, actual_start, note) \
 \ values ($1, $2, $3, $4, ( \
 \   select ending_at from ( \
 \     select ending_at from objects where cid = $2 \
@@ -51,9 +51,21 @@ savePayment = Statement sql encoder decoder False
 \ ), $5) \
 \ "
   encoder =
-    (opennode_id >$< Encoders.param Encoders.text)
+    (order_id >$< Encoders.param Encoders.text)
       <> (cid >$< Encoders.param Encoders.text)
       <> (amount >$< Encoders.param Encoders.int8)
       <> (time_bought >$< Encoders.param Encoders.interval)
       <> (note >$< Encoders.param Encoders.text)
   decoder = Decoders.unit
+
+invoiceExists :: Statement S.Text Bool
+invoiceExists = Statement sql encoder decoder False
+ where
+  sql
+    = "\
+\ select count(*) = 1 as count \
+\ from payments \
+\ where order_id = $1 \
+\ "
+  encoder = Encoders.param Encoders.text
+  decoder = Decoders.singleRow (Decoders.column Decoders.bool)

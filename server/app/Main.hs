@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# Language ScopedTypeVariables #-}
+{-# Language RecordWildCards #-}
 module Main where
 
 import           Control.Monad.IO.Class
@@ -19,6 +20,7 @@ import           Data.Function                  ( (&) )
 import           Data.Int
 import qualified Data.ByteString.Char8         as C8
 import           Data.Time.Clock
+import           Data.Aeson                     hiding (json)
 import           Web.Scotty                    as H
 import           System.Environment
 import           System.Exit
@@ -56,20 +58,27 @@ server db = do
     file "static/index.html"
 
   H.post "/api/pay" $ do
-    cid  <- H.param "cid"
-    note <- H.param "note"
-    amt  <- fmap decimal $ H.param "amount"
-    case amt of
+    (preq :: PinRequest) <- H.jsonData
+    let PinRequest{..} = preq
+    inv <- liftIO $ makeInvoice (_cid, _note, _amount)
+    liftIO $ print inv
+    json $ String $ toStrict inv
+
+  H.get "/api/status/:order_id" $ do
+    order_id <- H.param "order_id"
+    res <- liftIO
+      $ Session.run (Session.statement (order_id) invoiceExists) db
+    case res of
       Left err -> do
-        status status400
-        html $ "<h1>error</h1><p>wrong amount: " <> (T.pack err) <> "</p>"
-      Right (amount, _) -> do
-        inv <- liftIO $ makeInvoice (cid, note, amount)
-        liftIO $ print inv
-        html inv
+        liftIO $ print err
+        status status500
+      Right exists -> do
+        json $ Bool exists
+        status status200
 
   H.post "/callback/payment" $ do
-    invoice_id <- fmap toStrict $ H.param "id"
+    order_id <- fmap toStrict $ H.param "order_id"
+    opennode_id <- fmap toStrict $ H.param "id"
 
     amt        <- H.param "price"
     let amount = case decimal amt of
@@ -86,13 +95,13 @@ server db = do
       then do
         status status400
       else do
-        paid <- liftIO $ isInvoicePaid invoice_id
+        paid <- liftIO $ isInvoicePaid opennode_id
 
         if paid
           then do
             let paid_days = fromIntegral amount / 77 & round
             let time      = secondsToDiffTime $ paid_days * 86400
-            let payment   = Payment invoice_id cid amount time note
+            let payment   = Payment order_id cid amount time note
             res <- liftIO
               $ Session.run (Session.statement (payment) savePayment) db
 
@@ -112,6 +121,17 @@ server db = do
         status status500
         html $ "<h1>error</h1>" <> (err & show & T.pack)
       Right oo -> json oo
+
+data PinRequest
+  = PinRequest
+    { _cid :: Text
+    , _note :: Text
+    , _amount :: Int
+    } deriving (Show)
+
+instance FromJSON PinRequest where
+  parseJSON = withObject "object" $ \o ->
+    PinRequest <$> o .: "cid" <*> o .: "note" <*> o .: "amount"
 
 parsePort :: Text -> Int
 parsePort port = case decimal port of

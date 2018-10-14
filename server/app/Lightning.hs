@@ -13,6 +13,8 @@ import           Data.Text                     as S
 import           Data.Text.Lazy                as T
                                                 ( Text )
 import qualified Data.ByteString.Char8         as C8
+import           Data.UUID.V4                   ( nextRandom )
+import           Data.UUID                      ( toText )
 import           Network.Wreq                  as W
                                                 ( getWith
                                                 , postWith
@@ -51,6 +53,7 @@ makeInvoice (cid, note, amount) = do
   opennode_key <- getEnv "OPENNODE_KEY"
   service_url  <- getEnv "SERVICE_URL"
   let callback_url = service_url ++ "/callback/payment"
+  uuid <- fmap toText nextRandom
   let opts =
         W.defaults
           &  W.header "Content-Type"
@@ -60,6 +63,7 @@ makeInvoice (cid, note, amount) = do
   let body = object
         [ "description" .= (cid <> ":" <> note)
         , "amount" .= amount
+        , "order_id" .= uuid
         , "callback_url" .= callback_url
         ]
   r <- W.postWith opts (opennode_url <> "/charges") body

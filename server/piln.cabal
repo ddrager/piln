@@ -38,6 +38,7 @@ executable piln-exe
     , lens
     , wreq
     , contravariant
+    , uuid
     , aeson
     , time
     , lens-aeson

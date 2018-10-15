@@ -6,7 +6,8 @@ CREATE TABLE payments (
   paid_at timestamp NOT NULL DEFAULT now(),
   actual_start timestamp NOT NULL,
   ended boolean NOT NULL DEFAULT false,
-  note text NOT NULL
+  note text NOT NULL,
+  pinned_at timestamp
 );
 
 CREATE VIEW objects AS

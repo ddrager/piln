@@ -5,8 +5,10 @@
 module Main where
 
 import           Control.Monad.IO.Class
+import           Control.Concurrent
 import           Data.Text                     as S
-                                                ( findIndex
+                                                ( Text
+                                                , findIndex
                                                 , splitAt
                                                 , tail
                                                 )
@@ -20,7 +22,7 @@ import           Data.Function                  ( (&) )
 import           Data.Int
 import qualified Data.ByteString.Char8         as C8
 import           Data.Time.Clock
-import           Data.Aeson                     hiding (json)
+import           Data.Aeson              hiding ( json )
 import           Web.Scotty                    as H
 import           System.Environment
 import           System.Exit
@@ -34,6 +36,7 @@ import qualified Hasql.Session                 as Session
 
 import           Lightning
 import           Database
+import           IPFS
 
 main :: IO ()
 main = do
@@ -59,15 +62,14 @@ server db = do
 
   H.post "/api/pay" $ do
     (preq :: PinRequest) <- H.jsonData
-    let PinRequest{..} = preq
+    let PinRequest {..} = preq
     inv <- liftIO $ makeInvoice (_cid, _note, _amount)
     liftIO $ print inv
     json $ String $ toStrict inv
 
   H.get "/api/status/:order_id" $ do
     order_id <- H.param "order_id"
-    res <- liftIO
-      $ Session.run (Session.statement (order_id) invoiceExists) db
+    res <- liftIO $ Session.run (Session.statement (order_id) invoiceExists) db
     case res of
       Left err -> do
         liftIO $ print err
@@ -77,10 +79,9 @@ server db = do
         status status200
 
   H.post "/callback/payment" $ do
-    order_id <- fmap toStrict $ H.param "order_id"
+    order_id    <- fmap toStrict $ H.param "order_id"
     opennode_id <- fmap toStrict $ H.param "id"
-
-    amt        <- H.param "price"
+    amt         <- H.param "price"
     let amount = case decimal amt of
           Left  _               -> 0
           Right (a :: Int64, _) -> a
@@ -91,7 +92,7 @@ server db = do
             let (cid, note) = S.splitAt idx desc in (cid, S.tail note)
           Nothing -> (desc, "")
 
-    if amount < 77
+    if amount < 100
       then do
         status status400
       else do
@@ -99,19 +100,8 @@ server db = do
 
         if paid
           then do
-            let paid_days = fromIntegral amount / 77 & round
-            let time      = secondsToDiffTime $ paid_days * 86400
-            let payment   = Payment order_id cid amount time note
-            res <- liftIO
-              $ Session.run (Session.statement (payment) savePayment) db
-
-            case res of
-              Left err -> do
-                liftIO $ print err
-                status status500
-              Right _ -> do
-                liftIO $ print "saved payment on db"
-                status status200
+            liftIO $ forkIO $ processPin db (order_id, cid, amount, note)
+            status status200
           else status status403
 
   H.get "/api/objects" $ do
@@ -122,10 +112,21 @@ server db = do
         html $ "<h1>error</h1>" <> (err & show & T.pack)
       Right oo -> json oo
 
+processPin :: Conn.Connection -> (S.Text, S.Text, Int64, S.Text) -> IO ()
+processPin db (order_id, cid, amount, note) = case pinObject cid of
+  Left  err    -> print err
+  Right sizeGB -> do
+    let day_cost = 77 * sizeGB & toRational & ceiling
+    let paid_days = amount `quot` day_cost
+    let time      = secondsToDiffTime $ (toInteger paid_days) * 86400
+    let payment   = Payment order_id cid amount time note
+    res <- Session.run (Session.statement (payment) savePayment) db
+    print "saved pin/payment on db"
+
 data PinRequest
   = PinRequest
-    { _cid :: Text
-    , _note :: Text
+    { _cid :: T.Text
+    , _note :: T.Text
     , _amount :: Int
     } deriving (Show)
 
@@ -133,7 +134,7 @@ instance FromJSON PinRequest where
   parseJSON = withObject "object" $ \o ->
     PinRequest <$> o .: "cid" <*> o .: "note" <*> o .: "amount"
 
-parsePort :: Text -> Int
+parsePort :: T.Text -> Int
 parsePort port = case decimal port of
   Left  _      -> 3000
   Right (n, _) -> n

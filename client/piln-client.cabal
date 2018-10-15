@@ -1,9 +1,3 @@
--- This file has been generated from package.yaml by hpack version 0.20.0.
---
--- see: https://github.com/sol/hpack
---
--- hash: fb5cc29f38242afd6a9be828559980cada3ea4e6c5a0e39643ca95acdda22bcc
-
 name:           piln-client
 version:        0.1.0.0
 description:    Please see the README on Github at <https://github.com/fiatjaf/piln-client#readme>
@@ -33,4 +27,5 @@ executable piln-client-exe
     , unordered-containers
     , scientific
     , text
+    , qrcode
   default-language: Haskell2010

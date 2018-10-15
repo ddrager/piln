@@ -1,1 +1,1 @@
-../../client/.stack-work/dist/x86_64-linux/Cabal-1.24.2.0_ghcjs/build/piln-client-exe/piln-client-exe.jsexe/out.js
+/nix/store/5dxlg9afgrscnmbr2rgf839vwfac5bk9-piln-client-0.1.0.0/bin/piln-client-exe.jsexe/out.js

@@ -1,5 +1,5 @@
 { mkDerivation, aeson, base, ghcjs-base, miso, qrcode, scientific
-, stdenv, text, unordered-containers
+, stdenv, text, unordered-containers, array
 }:
 mkDerivation {
   pname = "piln-client";
@@ -9,7 +9,7 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     aeson base ghcjs-base miso qrcode scientific text
-    unordered-containers
+    unordered-containers array
   ];
   homepage = "https://github.com/fiatjaf/piln-client#readme";
   license = stdenv.lib.licenses.bsd3;

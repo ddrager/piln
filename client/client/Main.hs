@@ -5,7 +5,10 @@
 module Main where
 
 import           Prelude
+import           Debug.Trace
+import           Data.Array
 import           GHC.Generics
+import Data.Function
 import           Data.Scientific
 import           Data.HashMap.Strict            ( fromList )
 import           Data.Aeson
@@ -15,6 +18,7 @@ import           Miso.String                    ( MisoString
                                                 , fromMisoString
                                                 , pack
                                                 )
+import qualified Codec.Binary.QRCode           as QR
 import           Data.Monoid
 import           JavaScript.Web.XMLHttpRequest
 
@@ -52,7 +56,7 @@ main = do
   initialAction = FetchObjects
   model         = Model
     { objects = []
-    , adding  = Nothing
+    , adding  = Just $ AObject {acid = "", anote = "", amount = 100}
     , invoice = Nothing
     , err     = Nothing
     , loading = False
@@ -77,43 +81,44 @@ data Action
   deriving (Show, Eq)
 
 updateModel :: Action -> Model -> Effect Action Model
-updateModel NoOp         m = noEff m
+updateModel eff m@Model {..} = case eff of
+  NoOp         -> noEff m
 
-updateModel FetchObjects m = m <# do
-  SetPObjects <$> getPObjects
+  FetchObjects -> m <# do
+    SetPObjects <$> getPObjects
 
-updateModel (SetPObjects pobjs) m = noEff m { objects = pobjs }
+  SetPObjects pobjs -> noEff m { objects = pobjs }
 
-updateModel StartAddingNew m =
-  noEff m { adding = Just $ AObject {acid = "", anote = "", amount = 100} }
-updateModel (StartExtendingOld cid) m@Model {..} =
-  noEff m { adding = Just $ AObject {acid = cid, anote = "", amount = 100} }
+  StartAddingNew ->
+    noEff m { adding = Just $ AObject {acid = "", anote = "", amount = 100} }
+  StartExtendingOld cid ->
+    noEff m { adding = Just $ AObject {acid = cid, anote = "", amount = 100} }
 
-updateModel (ChangeNewCid value) m@Model {..} = case adding of
-  Nothing   -> noEff m
-  Just aobj -> noEff m { adding = Just $ aobj { acid = value } }
-updateModel (ChangeNewNote value) m@Model {..} = case adding of
-  Nothing   -> noEff m
-  Just aobj -> noEff m { adding = Just $ aobj { anote = value } }
-updateModel (ChangeNewAmount value) m@Model {..} =
-  let intvalue :: Int
-      intvalue = fromMisoString value
-  in  case adding of
-        Nothing   -> noEff m
-        Just aobj -> noEff m { adding = Just $ aobj { amount = intvalue } }
+  ChangeNewCid value -> case adding of
+    Nothing   -> noEff m
+    Just aobj -> noEff m { adding = Just $ aobj { acid = value } }
+  ChangeNewNote value -> case adding of
+    Nothing   -> noEff m
+    Just aobj -> noEff m { adding = Just $ aobj { anote = value } }
+  ChangeNewAmount value ->
+    let intvalue :: Int
+        intvalue = fromMisoString value
+    in  case adding of
+          Nothing   -> noEff m
+          Just aobj -> noEff m { adding = Just $ aobj { amount = intvalue } }
 
-updateModel RequestInvoice m@Model {..} = case adding of
-  Nothing   -> noEff m
-  Just aobj -> m { loading = True } <# do
-    GotInvoice <$> getInvoice aobj
+  RequestInvoice -> case adding of
+    Nothing   -> noEff m
+    Just aobj -> m { loading = True } <# do
+      GotInvoice <$> getInvoice aobj
 
-updateModel (GotInvoice value) m = noEff m { invoice = Just value }
+  GotInvoice value -> noEff m { invoice = Just value }
 
 viewModel :: Model -> View Action
 viewModel Model {..} = div_
   []
   [ div_ [class_ "pin-new"]
-         [button_ [onClick StartAddingNew] [text "pin new IPFS object"]]
+         [button_ [onClick StartAddingNew] [text "pin IPFS object"]]
   , case adding of
     Nothing   -> text ""
     Just aobj -> viewAObject aobj
@@ -124,7 +129,21 @@ viewModel Model {..} = div_
   ]
 
 viewInvoice :: MisoString -> View Action
-viewInvoice inv = div_ [class_ "invoice"] [text inv]
+viewInvoice inv =
+  let Just version = QR.version 14
+      Just matrix  = QR.encode version QR.H QR.Alphanumeric (fromMisoString inv)
+      w = QR.width matrix
+      arr          = QR.toArray matrix
+      lines = [0..w]
+      ld i j = case arr ! (i, j) of
+        QR.Light -> text " "
+        QR.Dark -> text "█"
+      
+  in  div_
+        [class_ "invoice"]
+        [ pre_ [class_ "qr"] $ map (\i -> div_ [] $ map (ld i) lines) lines
+        , div_ [class_ "text"] [text inv]
+        ]
 
 viewAObject :: AObject -> View Action
 viewAObject AObject {..} = div_
@@ -202,8 +221,8 @@ getInvoice aobj@AObject { acid, anote, amount } = do
     , reqHeaders         = [("Content-Type", "application/json")]
     , reqWithCredentials = False
     , reqData = StringData $ toMisoString $ encode $ Object $ fromList
-      [ ("cid", String $ fromMisoString acid)
-      , ("note", String $ fromMisoString anote)
+      [ ("cid"   , String $ fromMisoString acid)
+      , ("note"  , String $ fromMisoString anote)
       , ("amount", Number $ scientific (toInteger amount) 0)
       ]
     }

@@ -8,11 +8,18 @@ import           Prelude
 import           Debug.Trace
 import           Data.Array
 import           GHC.Generics
-import Data.Function
+import           Data.Function
 import           Data.Scientific
 import           Data.HashMap.Strict            ( fromList )
 import           Data.Aeson
-import           Miso
+import           Miso                    hiding ( width_
+                                                , height_
+                                                )
+import           Miso.Svg                hiding ( a_
+                                                , min_
+                                                , target_
+                                                )
+import           Miso.Svg.Attribute             ( style_ )
 import           Miso.String                    ( MisoString
                                                 , toMisoString
                                                 , fromMisoString
@@ -132,17 +139,43 @@ viewInvoice :: MisoString -> View Action
 viewInvoice inv =
   let Just version = QR.version 14
       Just matrix  = QR.encode version QR.H QR.Alphanumeric (fromMisoString inv)
-      w = QR.width matrix
-      arr          = QR.toArray matrix
-      lines = [0..w]
-      ld i j = case arr ! (i, j) of
-        QR.Light -> text " "
-        QR.Dark -> text "█"
-      
+      w            = QR.width matrix
+      s            = 7
+      arr :: Data.Array.Array (Int, Int) QR.Module
+      arr   = QR.toArray matrix
+      lines = [0 .. w]
+      point x y = rect_
+        [ width_ (toMisoString s)
+        , height_ (toMisoString s)
+        , x_ (toMisoString $ x * s)
+        , y_ (toMisoString $ y * s)
+        , Miso.Svg.Attribute.style_ stl
+        ]
+        []
+       where
+        stl =
+          toMisoString
+            $  "shape-rendering:crispEdges;"
+            ++ (case arr ! (x, y) of
+                 QR.Dark  -> "fill:#000000;"
+                 QR.Light -> "fill:#ffffff;"
+               )
   in  div_
-        [class_ "invoice"]
-        [ pre_ [class_ "qr"] $ map (\i -> div_ [] $ map (ld i) lines) lines
-        , div_ [class_ "text"] [text inv]
+        []
+        [ div_ [class_ "invoice-overlay"] []
+        , div_
+          [class_ "invoice"]
+          [ h1_ [] [ text "your invoice" ] 
+          , div_
+            [class_ "qr"]
+            [ svg_
+                [height_ "400", width_ "400"]
+                [ g_ [] $ map (\i -> g_ [] $ map (point i) lines) lines
+                , div_ [class_ "text"] [text inv]
+                ]
+            ]
+          , code_ [class_ "text"] [text inv]
+          ]
         ]
 
 viewAObject :: AObject -> View Action

@@ -6,13 +6,19 @@
   }){}
 }:
 let
+  patchedghcjs = pkgs.lib.overrideDerivation pkgs.haskell.compiler.ghcjs (drv: {
+    patches = [ ./680.patch ];
+  });
+
   ghcjspkgs = pkgs.haskell.packages.ghcjs.override {
+    ghc = patchedghcjs;
     overrides = self: super: {
       http-types = pkgs.haskell.lib.dontCheck super.http-types;
       http-media = pkgs.haskell.lib.dontCheck super.http-media;
       servant = pkgs.haskell.lib.dontCheck super.servant;
     };
   };
+
   result = ghcjspkgs.callCabal2nix "miso" (pkgs.fetchFromGitHub {
     owner = "dmjio";
     repo = "miso";

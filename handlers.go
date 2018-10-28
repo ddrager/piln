@@ -9,10 +9,6 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func handlePage(w http.ResponseWriter, r *http.Request) {
-
-}
-
 func orderCreate(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {

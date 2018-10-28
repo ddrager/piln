@@ -2,3 +2,4 @@
 *.swo
 *.env
 piln
+node_modules

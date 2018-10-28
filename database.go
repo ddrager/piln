@@ -3,14 +3,15 @@ package main
 import "time"
 
 type Object struct {
-	CID      string    `json:"cid"`
-	SizeGB   int       `json:"sizegb"`
-	PinnedAt time.Time `json:"pinned_at"`
-	EndsAt   time.Time `json:"ends_at"`
-	Notes    []string  `json:"notes"`
+	CID      string    `json:"cid" db:"cid"`
+	SizeGB   int       `json:"sizegb" db:"sizegb"`
+	PinnedAt time.Time `json:"pinned_at" db:"pinned_at"`
+	EndsAt   time.Time `json:"ends_at" db:"ends_at"`
+	Notes    []string  `json:"notes" db:"notes"`
 }
 
 func fetchObjects() (oo []Object, err error) {
+	oo = make([]Object, 0)
 	err = pg.Select(&oo, `
 SELECT cid, sizegb, pinned_at, pinned_at + lifespan AS ends_at
 FROM objects

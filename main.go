@@ -15,7 +15,6 @@ import (
 )
 
 type Settings struct {
-	SecretKey       string  `envconfig:"SECRET_KEY" required:"true"`
 	ServiceName     string  `envconfig:"SERVICE_NAME" required:"true"`
 	ServiceURL      string  `envconfig:"SERVICE_URL" required:"true"`
 	Port            string  `envconfig:"PORT" required:"true"`
@@ -66,13 +65,13 @@ func main() {
 			http.ServeFile(w, r, "./public/icon.png")
 			return
 		})
-	r.Path("/").Methods("GET").HandlerFunc(handlePage)
 	r.Path("/api/order").Methods("POST").HandlerFunc(orderCreate)
 	r.Path("/api/order/{orderid}").Methods("GET").HandlerFunc(orderStatus)
 	r.Path("/api/objects").Methods("GET").HandlerFunc(listObjects)
 	r.Path("/api/object/{cid}").Methods("GET").HandlerFunc(getObject)
 	r.Path("/callback/order").Methods("POST").HandlerFunc(paymentCallback)
 	r.Path("/cron/periodic").Methods("POST").HandlerFunc(periodicJob)
+	r.PathPrefix("/").Methods("GET").Handler(http.FileServer(http.Dir("./static")))
 
 	// start the server
 	srv := &http.Server{

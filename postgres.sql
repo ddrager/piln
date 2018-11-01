@@ -13,3 +13,6 @@ CREATE TABLE objects (
   pinned_at timestamp,
   lifespan interval
 );
+
+table objects;
+table payments;

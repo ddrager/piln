@@ -1,10 +1,14 @@
 package main
 
-import "time"
+import (
+	"errors"
+	"strings"
+	"time"
+)
 
 type Object struct {
 	CID      string    `json:"cid" db:"cid"`
-	SizeGB   int       `json:"sizegb" db:"sizegb"`
+	SizeGB   float64   `json:"sizegb" db:"sizegb"`
 	PinnedAt time.Time `json:"pinned_at" db:"pinned_at"`
 	EndsAt   time.Time `json:"ends_at" db:"ends_at"`
 	Notes    []string  `json:"notes" db:"notes"`
@@ -36,45 +40,69 @@ VALUES ($1, $2, $3, $4)
 }
 
 func processPayments() error {
-	txn, err := pg.Beginx()
-	if err != nil {
-		return err
-	}
-
 	var payments []struct {
-		CID    string `db:"cid"`
-		Amount int64  `db:"amount"`
+		OrderId string `db:"order_id"`
+		CID     string `db:"cid"`
+		Amount  int64  `db:"amount"`
 	}
-	err = txn.Select(&payments, `
-SELECT cid, amount FROM payments WHERE NOT processed
+	err = pg.Select(&payments, `
+SELECT order_id, cid, amount FROM payments WHERE NOT processed
     `)
 	if err != nil {
-		txn.Rollback()
 		return err
 	}
 
+	jobs := make(chan error, len(payments))
 	for _, payment := range payments {
-		sizegb, err := pin(
-			payment.CID,
-			float64(payment.Amount)/float64(s.PriceGB),
-		)
-		if err != nil {
-			txn.Rollback()
-			return err
-		}
+		go func(orderId string, cid string, amount int64) {
+			log.Debug().Str("order_id", orderId).Int64("amount", amount).Str("cid", cid).
+				Msg("processing payment")
+			sizegb, err := pin(
+				cid,
+				float64(payment.Amount)/float64(s.PriceGB),
+			)
+			if err != nil {
+				jobs <- err
+				return
+			}
 
-		duration := time.Hour * time.Duration(
-			float64(payment.Amount)/float64(s.PriceGB/24)/sizegb,
-		)
+			duration := time.Hour * time.Duration(
+				float64(amount)/float64(s.PriceGB/24)/sizegb,
+			)
 
-		_, err = txn.Exec(`
+			_, err = pg.Exec(`
+WITH c AS (
+  UPDATE payments
+  SET processed = true
+  WHERE order_id = $1
+)
 INSERT INTO objects (cid, sizegb, pinned_at, lifespan)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (cid) DO UPDATE SET pinned_at = $3, lifespan = lifespan + $4
-        `, payment.CID, sizegb, time.Now(), duration)
+VALUES ($2, $3, now(), make_interval(secs := $4))
+ON CONFLICT (cid)
+  DO UPDATE SET lifespan = objects.lifespan + make_interval(secs := $4)
+            `, orderId, cid, sizegb, duration.Seconds())
+			jobs <- err
+			return
+		}(payment.OrderId, payment.CID, payment.Amount)
 	}
 
-	return txn.Commit()
+	anyerr := make(chan error, 1)
+	go func() {
+		for err := range jobs {
+			if err != nil {
+				anyerr <- err
+				return
+			}
+		}
+		anyerr <- nil
+	}()
+
+	select {
+	case res := <-anyerr:
+		return res
+	case <-time.After(90 * time.Minute):
+		return errors.New("timeout")
+	}
 }
 
 func eraseEnded() error {
@@ -86,6 +114,7 @@ SELECT cid FROM objects WHERE pinned_at + lifespan < now()
 		return err
 	}
 
+	log.Debug().Str("cids", strings.Join(cids, ",")).Msg("erasing ended")
 	for _, cid := range cids {
 		err = unpin(cid)
 		if err != nil {

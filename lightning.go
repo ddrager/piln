@@ -10,15 +10,15 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-const SEPARATOR = "|^~|"
+const SEPARATOR = "|||"
 
 func splitDescription(desc string) (string, string) {
-	s := strings.SplitN(desc, SEPARATOR, 1)
+	s := strings.SplitN(desc, SEPARATOR, 2)
 	return s[0], s[1]
 }
 
 func isInvoicePaid(id string) bool {
-	req, _ := on.Get("/charge/" + id).Request()
+	req, _ := on.Get("/v1/charge/" + id).Request()
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Warn().Str("id", id).Err(err).Msg("failed to fetch charge")

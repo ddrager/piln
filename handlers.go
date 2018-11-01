@@ -21,10 +21,8 @@ func orderCreate(w http.ResponseWriter, r *http.Request) {
 	note := res[1].String()
 	amount := res[2].Int()
 
-	if amount < s.PriceGB {
-		http.Error(w, "amount too low", 400)
-		return
-	}
+	log.Info().Int64("amount", amount).Str("cid", cid).Str("note", note).
+		Msg("payment order")
 
 	cid = toCID(cid)
 	if cid == "" {
@@ -54,6 +52,10 @@ func paymentCallback(w http.ResponseWriter, r *http.Request) {
 	description := r.FormValue("description")
 	id := r.FormValue("id")
 
+	log.Info().Str("oi", order_id).Str("p", price).Msg("payment callback")
+
+	cid, note := splitDescription(description)
+
 	amount, err := strconv.Atoi(price)
 	if err != nil {
 		log.Warn().Err(err).Str("price", price).Str("id", id).
@@ -62,7 +64,6 @@ func paymentCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isInvoicePaid(id) {
-		cid, note := splitDescription(description)
 		err = savePayment(order_id, cid, amount, note)
 		if err != nil {
 			log.Error().Err(err).
@@ -76,11 +77,11 @@ func paymentCallback(w http.ResponseWriter, r *http.Request) {
 			log.Error().Err(err).
 				Msg("failed to process payments after getting a payment")
 		}()
-
 	} else {
 		log.Warn().Err(err).Str("id", id).
 			Msg("invoice reported as paid but not actually paid, why?")
 		http.Error(w, "", 406)
+		return
 	}
 
 	w.WriteHeader(200)
@@ -115,6 +116,8 @@ func getObject(w http.ResponseWriter, r *http.Request) {
 }
 
 func periodicJob(w http.ResponseWriter, r *http.Request) {
+	log.Info().Msg("periodic job")
+
 	go func() {
 		err := processPayments()
 		if err != nil {

@@ -1,0 +1,9 @@
+PRIVACY POLICY
+
+Everything is public.
+
+We don't collect any personal or identifiable data except for the IPFS CID, the note and the amount you paid, but that information is public.
+
+The Lightning invoices are handled by https://opennode.co/ and they may or may not be collecting data on your Lightning node, but we don't care and don't use that.
+
+Everything you publish in the IPFS is public. If you want private stuff you must encrypt it -- however if you're trying to store private stuff here, even encrypted, you're probably doing it wrong. It's better to store your private stuff (encrypted) on some cloud storage provider. Try https://rclone.org/.

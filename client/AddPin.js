@@ -60,11 +60,23 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
       }}
     >
       <label>
-        <span>IPFS identifier:</span>{' '}
+        <span
+          data-balloon-length="small"
+          data-balloon-pos="left"
+          data-balloon="The IPFS CID, with or without the leading /ipfs/"
+        >
+          IPFS identifier:
+        </span>{' '}
         <input value={cid} onChange={setFromChange(cidUpdate)} />
       </label>
       <label>
-        <span>Satoshis to pay:</span>{' '}
+        <span
+          data-balloon-length="small"
+          data-balloon-pos="left"
+          data-balloon="You decide how much you want to pay now, we'll only know how much time does it buy for the given object afterwards."
+        >
+          Satoshis to pay:
+        </span>{' '}
         <input
           type="number"
           min="1"
@@ -74,10 +86,16 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
         />
       </label>
       <label>
-        <span>Note to identify the object:</span>{' '}
+        <span
+          data-balloon-length="small"
+          data-balloon-pos="left"
+          data-balloon="You can use 4 characters for each satoshi you pay, this is meant to identify the object for visitors or yourself in the future. Optional."
+        >
+          Note to identify the object:
+        </span>{' '}
         <input
           value={note}
-          maxLength={amount}
+          maxLength={amount * 4}
           onChange={setFromChange(noteUpdate)}
         />
       </label>
@@ -129,7 +147,7 @@ function Invoice({
   useEffect(
     () => {
       if (paid) {
-        setTimeout(onAfterPaid, 8000)
+        setTimeout(onAfterPaid, 20000)
       }
     },
     [paid]
@@ -138,7 +156,15 @@ function Invoice({
   return (
     <div id="invoice">
       {paid ? (
-        <h1 className="paid">PAID</h1>
+        <>
+          <h1 className="paid">PAID</h1>
+          <p>You can close this page now.</p>
+          <p>
+            We'll try to fetch from the IPFS network for a while and as soon as
+            we're successful it will show up in this page.
+          </p>
+          <p>If it fails a lot we'll give up.</p>
+        </>
       ) : (
         <>
           <h2>Pay this invoice to pin your object</h2>

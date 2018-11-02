@@ -22,8 +22,8 @@ func orderCreate(w http.ResponseWriter, r *http.Request) {
 	note := res[1].String()
 	amount := res[2].Int()
 
-	if len(note) > int(amount) {
-		http.Error(w, "note length should not be greater than amount paid", 400)
+	if len(note) > int(amount)*4 {
+		http.Error(w, "note length should not be greater than amount paid * 4", 400)
 		return
 	}
 

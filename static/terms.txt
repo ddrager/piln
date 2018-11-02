@@ -1,0 +1,5 @@
+TERMS OF SERVICE
+
+Assume your payments are donations. We don't guarantee that our node will be able to download your data. After downloading it an making it available we don't guarantee that it will be available at all times. Eventually (can be tomorrow) we will lose all your data, so don't pay to host stuff for a long time. We're running this as an experiment in a very poor homemade setup without duplication or other guarantees. Also the internet connection here is not the best.
+
+Repeating: we will lose your data. Don't rely solely on us for hosting it, just as a fallback.

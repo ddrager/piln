@@ -70,11 +70,11 @@ VALUES ($1, $2, $3, $4)
 }
 
 func processPayments() error {
-	var payments []struct {
+	payments := make([]struct {
 		OrderId string `db:"order_id"`
 		CID     string `db:"cid"`
 		Amount  int64  `db:"amount"`
-	}
+	}, 0)
 	err = pg.Select(&payments, `
 WITH giveup AS (
   UPDATE payments
@@ -86,9 +86,11 @@ SET tries = payments.tries + 1
 WHERE NOT processed
 RETURNING order_id, cid, amount
     `)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
+
+	log.Debug().Int("n", len(payments)).Msg("processing payments")
 
 	jobs := make(chan error, len(payments))
 	for _, payment := range payments {
@@ -103,6 +105,10 @@ RETURNING order_id, cid, amount
 				jobs <- err
 				return
 			}
+			log.Info().
+				Str("order_id", orderId).Int64("amount", amount).
+				Str("cid", cid).Float64("sizegb", sizegb).
+				Msg("pinned")
 
 			duration := time.Hour * time.Duration(
 				float64(amount)/float64(s.PriceGB/24)/sizegb,

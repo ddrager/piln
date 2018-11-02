@@ -1,34 +1,64 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type Object struct {
-	CID      string    `json:"cid" db:"cid"`
-	SizeGB   float64   `json:"sizegb" db:"sizegb"`
-	PinnedAt time.Time `json:"pinned_at" db:"pinned_at"`
-	EndsAt   time.Time `json:"ends_at" db:"ends_at"`
-	Notes    []string  `json:"notes" db:"notes"`
+	CID      string         `json:"cid" db:"cid"`
+	SizeGB   float64        `json:"sizegb" db:"sizegb"`
+	PinnedAt time.Time      `json:"pinned_at" db:"pinned_at"`
+	EndsAt   time.Time      `json:"ends_at" db:"ends_at"`
+	Notes    pq.StringArray `json:"notes" db:"notes"`
+}
+
+type Payment struct {
+	OrderId   string `json:"order_id" db:"order_id"`
+	CID       string `json:"cid" db:"cid"`
+	PaidAt    string `json:"paid_at" db:"paid_at"`
+	Amount    int    `json:"amount" db:"amount"`
+	Processed bool   `json:"processed" db:"processed"`
+	Tries     int    `json:"tries" db:"tries"`
+	GivenUp   bool   `json:"given_up" db:"given_up"`
 }
 
 func fetchObjects() (oo []Object, err error) {
 	oo = make([]Object, 0)
 	err = pg.Select(&oo, `
-SELECT cid, sizegb, pinned_at, pinned_at + lifespan AS ends_at
-FROM objects
+SELECT cid, sizegb, pinned_at, pinned_at + lifespan AS ends_at, notes(o)
+FROM objects AS o
+ORDER BY ends_at ASC
     `)
 	return
 }
 
-func fetchObject(cid string) (o Object, err error) {
+func fetchObject(cid string) (*Object, error) {
+	o := Object{}
 	err = pg.Get(&o, `
-SELECT cid, sizegb, pinned_at, pinned_at + lifespan AS ends_at
-FROM objects WHERE cid = $1
+SELECT cid, sizegb, pinned_at, pinned_at + lifespan AS ends_at, notes(o)
+FROM objects AS o WHERE cid = $1
     `, cid)
-	return
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &o, err
+}
+
+func fetchPayment(orderId string) (*Payment, error) {
+	p := Payment{}
+	err = pg.Get(&p, `
+SELECT order_id, paid_at, amount, processed, tries, given_up
+FROM payments AS o WHERE order_id = $1
+    `, orderId)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &p, err
 }
 
 func savePayment(order_id, cid string, amount int, note string) error {
@@ -46,7 +76,15 @@ func processPayments() error {
 		Amount  int64  `db:"amount"`
 	}
 	err = pg.Select(&payments, `
-SELECT order_id, cid, amount FROM payments WHERE NOT processed
+WITH giveup AS (
+  UPDATE payments
+  SET given_up = true, processed = true
+  WHERE tries > 5
+)
+UPDATE payments
+SET tries = payments.tries + 1
+WHERE NOT processed
+RETURNING order_id, cid, amount
     `)
 	if err != nil {
 		return err
@@ -100,7 +138,7 @@ ON CONFLICT (cid)
 	select {
 	case res := <-anyerr:
 		return res
-	case <-time.After(90 * time.Minute):
+	case <-time.After(60 * time.Minute):
 		return errors.New("timeout")
 	}
 }

@@ -34,10 +34,10 @@ func isInvoicePaid(id string) bool {
 	return "paid" == gjson.GetBytes(body, "data.status").String()
 }
 
-func makeInvoice(cid string, note string, amount int64) (string, error) {
+func makeInvoice(cid string, note string, amount int64) (invoice string, order_id string, err error) {
 	description := cid + SEPARATOR + note
 	callback_url := s.ServiceURL + "/callback/order"
-	order_id := cuid.New()
+	order_id = cuid.New()
 
 	req, _ := on.Post("/v1/charges").BodyJSON(struct {
 		Description string `json:"description"`
@@ -48,21 +48,22 @@ func makeInvoice(cid string, note string, amount int64) (string, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return
 	}
 
 	success := gjson.GetBytes(body, "success")
 	if success.Exists() && success.Bool() == false {
 		log.Error().Str("err", gjson.GetBytes(body, "message").String()).
 			Msg("failed to make invoice")
-		return "", errors.New("failed to make invoice")
+		err = errors.New("failed to make invoice")
+		return
 	}
 
-	invoice := gjson.GetBytes(body, "data.lightning_invoice.payreq").String()
-	return invoice, nil
+	invoice = gjson.GetBytes(body, "data.lightning_invoice.payreq").String()
+	return invoice, order_id, nil
 }

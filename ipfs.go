@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"strings"
+
+	"github.com/c2h5oh/datasize"
 )
 
 func toCID(cid string) string {
@@ -18,7 +20,7 @@ func pin(cid string, max float64) (sizegb float64, err error) {
 		return
 	}
 
-	sizegb = float64(stats.CumulativeSize) / 1000000000
+	sizegb = datasize.ByteSize(stats.CumulativeSize).GBytes()
 	if sizegb > max || sizegb > s.AbsoluteMaxSize {
 		err = errors.New("object too big")
 		return

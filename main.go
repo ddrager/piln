@@ -66,7 +66,7 @@ func main() {
 			return
 		})
 	r.Path("/api/order").Methods("POST").HandlerFunc(orderCreate)
-	r.Path("/api/order/{orderid}").Methods("GET").HandlerFunc(orderStatus)
+	r.Path("/api/order/{orderId}").Methods("GET").HandlerFunc(orderStatus)
 	r.Path("/api/objects").Methods("GET").HandlerFunc(listObjects)
 	r.Path("/api/object/{cid}").Methods("GET").HandlerFunc(getObject)
 	r.Path("/callback/order").Methods("POST").HandlerFunc(paymentCallback)

@@ -3,40 +3,46 @@
   color #333
   font-family monospace
 
+html
+  margin 0
+  padding 0
+  background-color beige
+
 body
   max-width 923px
-  margin auto
+  margin 15px auto
+  padding 10px
 
 header
   text-decoration italic
 
-.ReactModal__Overlay
-  background rgba(100, 100, 100, 0.5)
-
-.ReactModal__Content
-  background white !important
-  border 5px solid #0a6955 !important
-  width 500px !important
-  left 50% !important
-  margin-left -250px !important
-  min-height 620px
-
-  h1
+#invoice
+  & > *
     width 400px
     margin auto
 
+  h1.paid
+    display block
+    text-align center
+    font-size 180%
+    padding 80px
+
   svg
-    margin auto
     display block
 
   p
-    width 400px
     margin 20px auto
     white-space pre-wrap
     word-wrap break-word
     word-break break-all
 
+  button
+    display block
+    margin-bottom 30px
+
 #pin
+  max-width 500px
+  margin auto
   display flex
   flex-direction column
 
@@ -51,11 +57,39 @@ header
     input
       flex-grow 3
       font-size 115%
+      padding 9px
 
   button
     margin 9px 20%
     padding 12px 0
     font-size 115%
+
+#objects
+  display flex
+  flex-wrap wrap
+
+  .object
+    margin 15px
+    padding 9px
+    background-color white
+    box-shadow 3px 3px 5px #bababa
+    border-radius 8px
+
+    &, h3
+      white-space pre-wrap
+      word-break break-all
+      word-wrap break-word
+
+    table
+      width 100%
+
+    button
+      margin 15px
+      display block
+
+    ul, li
+      padding 0
+      margin 0
 
 footer
   margin-top 200px

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/tidwall/gjson"
 )
 
@@ -21,6 +22,11 @@ func orderCreate(w http.ResponseWriter, r *http.Request) {
 	note := res[1].String()
 	amount := res[2].Int()
 
+	if len(note) > int(amount) {
+		http.Error(w, "note length should not be greater than amount paid", 400)
+		return
+	}
+
 	log.Info().Int64("amount", amount).Str("cid", cid).Str("note", note).
 		Msg("payment order")
 
@@ -30,20 +36,33 @@ func orderCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invoice, err := makeInvoice(cid, note, amount)
+	invoice, order_id, err := makeInvoice(cid, note, amount)
 	if err != nil {
 		log.Warn().Err(err).
+			Str("order_id", order_id).
 			Str("cid", cid).Int64("amount", amount).Str("note", note).
 			Msg("error making invoice")
 		http.Error(w, "error making invoice, please contact us", 500)
 		return
 	}
 
-	json.NewEncoder(w).Encode(invoice)
+	json.NewEncoder(w).Encode(struct {
+		Invoice string `json:"invoice"`
+		OrderId string `json:"order_id"`
+	}{invoice, order_id})
 }
 
 func orderStatus(w http.ResponseWriter, r *http.Request) {
+	order_id := mux.Vars(r)["orderId"]
 
+	p, err := fetchPayment(order_id)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "", 400)
+		return
+	}
+
+	json.NewEncoder(w).Encode(p)
 }
 
 func paymentCallback(w http.ResponseWriter, r *http.Request) {

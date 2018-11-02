@@ -15,7 +15,11 @@ export default function PinnedObject({
 }) {
   return (
     <div className="object">
-      <h3>{cid}</h3>
+      <h3>
+        <a href={`https://ipfs.io/ipfs/${cid}`} target="_blank">
+          {cid}
+        </a>
+      </h3>
       <table>
         <tbody>
           <tr>

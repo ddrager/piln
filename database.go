@@ -91,6 +91,9 @@ RETURNING order_id, cid, amount
 	}
 
 	log.Debug().Int("n", len(payments)).Msg("processing payments")
+	if len(payments) == 0 {
+		return nil
+	}
 
 	jobs := make(chan error, len(payments))
 	for _, payment := range payments {

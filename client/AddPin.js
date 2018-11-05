@@ -1,15 +1,18 @@
 /** @format */
 
 const fetch = window.fetch
+const fromNow = require('fromnow')
 const prettyBytes = require('pretty-bytes')
 
 import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
 import {QRCode} from 'react-qr-svg'
 import {toast} from 'react-toastify'
 
+const PRICE_GB = 77
+
 export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
   let [o, setObject] = useState({cid: selectedCid})
-  let [amount, setAmount] = useState(77)
+  let [amount, setAmount] = useState(PRICE_GB)
   let [note, setNote] = useState('')
 
   function fetchStats() {
@@ -25,10 +28,11 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
     () => {
       setObject({cid: selectedCid})
       setInvoice(null)
-      setTimeout(() => fetchStats(), 1000)
     },
     [selectedCid]
   )
+
+  useEffect(fetchStats, [o.cid])
 
   let [invoice, setInvoice] = useState(null)
   let [orderId, setOrderId] = useState(null)
@@ -81,10 +85,10 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
           onBlur={fetchStats}
         />
         {o.error ? (
-          <div id="error">{o.error}</div>
+          <div className="error">{o.error}</div>
         ) : (
           o.stats && (
-            <div id="stats">
+            <div>
               <div>block size: {prettyBytes(o.stats.BlockSize)}</div>
               <div>number of links: {o.stats.NumLinks}</div>
               <div>cumulative size: {prettyBytes(o.stats.CumulativeSize)}</div>
@@ -107,6 +111,9 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
           value={amount}
           onChange={e => setAmount(e.target.value)}
         />
+        {o.stats && (
+          <div>time: {timeBought(amount, o.stats.CumulativeSize)}</div>
+        )}
       </label>
       <label>
         <span
@@ -253,4 +260,16 @@ async function fetchOrder(orderId) {
       type: 'error'
     })
   }
+}
+
+function timeBought(amount, sizebytes) {
+  let days = amount / (sizebytes / 1000000000) / PRICE_GB
+  if (days < 1) {
+    return 'nothing'
+  }
+
+  let now = new Date()
+  let then = new Date().setDate(now.getDate() + days)
+
+  return fromNow(then, {max: 2})
 }

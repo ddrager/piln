@@ -64,7 +64,9 @@ export default function PinnedObject({
                           setShowAllProvs(!showAllProvs)
                         }}
                       >
-                        {showAllProvs ? 'hide' : 'show more'}
+                        {showAllProvs
+                          ? 'hide'
+                          : `show more (${provs.length} total)`}
                       </a>
                     </li>
                   )}

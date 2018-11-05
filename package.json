@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "array-uniq": "^2.0.0",
     "fromnow": "^3.0.0",
     "pretty-bytes": "^5.1.0",
     "react": "^16.7.0-alpha.0",

@@ -1,44 +1,53 @@
 /** @format */
 
 const fetch = window.fetch
+const prettyBytes = require('pretty-bytes')
 
 import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
 import {QRCode} from 'react-qr-svg'
 import {toast} from 'react-toastify'
 
 export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
-  let [cid, cidUpdate] = useState(selectedCid)
-  let [amount, amountUpdate] = useState(77)
-  let [note, noteUpdate] = useState('')
+  let [o, setObject] = useState({cid: selectedCid})
+  let [amount, setAmount] = useState(77)
+  let [note, setNote] = useState('')
+
+  function fetchStats() {
+    if (o.cid && window.ipfs) {
+      window.ipfs.object.stat(o.cid, (err, stats) => {
+        if (stats) setObject(o => ({...o, stats}))
+        if (err) setObject(o => ({...o, error: err.message}))
+      })
+    }
+  }
 
   useEffect(
     () => {
-      cidUpdate(selectedCid)
-      invoiceUpdate(null)
+      setObject({cid: selectedCid})
+      setInvoice(null)
+      setTimeout(() => fetchStats(), 1000)
     },
     [selectedCid]
   )
 
-  const setFromChange = fn => e => fn(e.target.value)
-
-  let [invoice, invoiceUpdate] = useState(null)
-  let [orderId, orderIdUpdate] = useState(null)
+  let [invoice, setInvoice] = useState(null)
+  let [orderId, setOrderId] = useState(null)
 
   if (invoice) {
     return (
       <Invoice
         orderId={orderId}
-        cid={cid}
+        cid={o.cid}
         amount={amount}
         note={note}
         invoice={invoice}
-        invoiceUpdate={invoiceUpdate}
+        setInvoice={setInvoice}
         onAfterPaid={() => {
-          invoiceUpdate(null)
-          orderIdUpdate(null)
-          cidUpdate('')
-          amountUpdate(77)
-          noteUpdate('')
+          setInvoice(null)
+          setOrderId(null)
+          setObject({})
+          setAmount(77)
+          setNote('')
 
           onAfterPaid()
         }}
@@ -51,11 +60,10 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
       id="pin"
       onSubmit={async e => {
         e.preventDefault()
-
-        let {invoice, order_id} = await createOrder({cid, amount, note})
+        let {invoice, order_id} = await createOrder({cid: o.cid, amount, note})
         if (invoice) {
-          orderIdUpdate(order_id)
-          invoiceUpdate(invoice)
+          setOrderId(order_id)
+          setInvoice(invoice)
         }
       }}
     >
@@ -65,9 +73,24 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
           data-balloon-pos="left"
           data-balloon="The IPFS CID, with or without the leading /ipfs/"
         >
-          IPFS identifier:
+          IPFS hash:
         </span>{' '}
-        <input value={cid} onChange={setFromChange(cidUpdate)} />
+        <input
+          value={o.cid}
+          onChange={e => setObject({cid: e.target.value})}
+          onBlur={fetchStats}
+        />
+        {o.error ? (
+          <div id="error">{o.error}</div>
+        ) : (
+          o.stats && (
+            <div id="stats">
+              <div>block size: {prettyBytes(o.stats.BlockSize)}</div>
+              <div>number of links: {o.stats.NumLinks}</div>
+              <div>cumulative size: {prettyBytes(o.stats.CumulativeSize)}</div>
+            </div>
+          )
+        )}
       </label>
       <label>
         <span
@@ -82,7 +105,7 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
           min="1"
           step="1"
           value={amount}
-          onChange={setFromChange(amountUpdate)}
+          onChange={e => setAmount(e.target.value)}
         />
       </label>
       <label>
@@ -96,10 +119,10 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
         <input
           value={note}
           maxLength={amount * 4}
-          onChange={setFromChange(noteUpdate)}
+          onChange={e => setNote(e.target.value)}
         />
       </label>
-      <button>Pin</button>
+      <button disabled={!o.cid || o.error || !amount}>Pin</button>
     </form>
   )
 }
@@ -110,7 +133,7 @@ function Invoice({
   note,
   orderId,
   invoice,
-  invoiceUpdate,
+  setInvoice,
   onAfterPaid
 }) {
   let [paid, setPaid] = useState(false)
@@ -182,7 +205,7 @@ function Invoice({
           <button
             onClick={e => {
               e.preventDefault()
-              invoiceUpdate(null)
+              setInvoice(null)
             }}
           >
             Cancel

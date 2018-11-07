@@ -79,7 +79,7 @@ func processPayments() error {
 WITH giveup AS (
   UPDATE payments
   SET given_up = true, processed = true
-  WHERE tries > 5
+  WHERE tries > 20
 )
 UPDATE payments
 SET tries = payments.tries + 1

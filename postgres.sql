@@ -22,5 +22,5 @@ CREATE FUNCTION notes(objects) RETURNS text[] AS $$
     AND note IS NOT NULL;
 $$ LANGUAGE SQL;
 
-table objects;
-table payments;
+select * from objects;
+select * from payments order by paid_at;

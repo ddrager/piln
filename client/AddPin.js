@@ -4,15 +4,17 @@ const fetch = window.fetch
 const fromNow = require('fromnow')
 const prettyBytes = require('pretty-bytes')
 
-import React, {useState, useEffect} from 'react' // eslint-disable-line no-unused-vars
+import React, {useState, useEffect, useContext} from 'react' // eslint-disable-line no-unused-vars
 import {QRCode} from 'react-qr-svg'
 import {toast} from 'react-toastify'
 
-const PRICE_GB = 77
+import {GlobalContext} from './Main'
 
 export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
+  let {priceGB} = useContext(GlobalContext)
+
   let [o, setObject] = useState({cid: selectedCid})
-  let [amount, setAmount] = useState(PRICE_GB)
+  let [amount, setAmount] = useState(50)
   let [note, setNote] = useState('')
 
   function fetchStats() {
@@ -112,7 +114,7 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
           onChange={e => setAmount(e.target.value)}
         />
         {o.stats && (
-          <div>time: {timeBought(amount, o.stats.CumulativeSize)}</div>
+          <div>time: {timeBought(amount, o.stats.CumulativeSize, priceGB)}</div>
         )}
       </label>
       <label>
@@ -262,8 +264,8 @@ async function fetchOrder(orderId) {
   }
 }
 
-function timeBought(amount, sizebytes) {
-  let days = amount / (sizebytes / 1000000000) / PRICE_GB
+function timeBought(amount, sizebytes, price_gb) {
+  let days = amount / (sizebytes / 1000000000) / price_gb
   if (days < 1) {
     return 'nothing'
   }

@@ -65,6 +65,7 @@ func main() {
 			http.ServeFile(w, r, "./public/icon.png")
 			return
 		})
+	r.Path("/api/globals").Methods("GET").HandlerFunc(getGlobals)
 	r.Path("/api/order").Methods("POST").HandlerFunc(orderCreate)
 	r.Path("/api/order/{orderId}").Methods("GET").HandlerFunc(orderStatus)
 	r.Path("/api/objects").Methods("GET").HandlerFunc(listObjects)

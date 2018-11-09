@@ -10,6 +10,12 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+func getGlobals(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(struct {
+		PriceGB int64 `json:"priceGB"`
+	}{s.PriceGB})
+}
+
 func orderCreate(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {

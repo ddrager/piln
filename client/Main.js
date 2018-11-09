@@ -12,21 +12,52 @@ import AddPin from './AddPin'
 export const GlobalContext = React.createContext()
 
 export default function Main() {
-  let [{priceGB}, setGlobals] = useState({priceGB: 1000000000})
+  let [offline, setOffline] = useState(false)
+  let [{priceGB, ipfsID, ipfsAddresses}, setGlobals] = useState({
+    priceGB: 1000000000
+  })
   let [objects, setObjects] = useState([])
   let [selectedCid, select] = useState(undefined)
-
-  async function loadGlobals() {
-    setGlobals(await fetchGlobals())
-  }
 
   async function loadObjects() {
     let objects = await fetchObjects()
     if (objects) setObjects(objects)
   }
 
-  useEffect(loadGlobals, [])
+  useEffect(async () => {
+    try {
+      setGlobals(await fetchGlobals())
+    } catch (err) {
+      setOffline(true)
+    }
+  }, [])
   useEffect(loadObjects, [])
+  useEffect(
+    async () => {
+      if (ipfsAddresses && window.ipfs) {
+        ipfsAddresses.forEach(addr => {
+          window.ipfs.swarm.connect(
+            addr,
+            console.log
+          )
+        })
+      }
+    },
+    [ipfsAddresses]
+  )
+
+  if (offline) {
+    return (
+      <h1>
+        Our IPFS node is offline, so this service is not operational right now.
+        <p>
+          Please contact us at piln@alhur.es if you think we don't know that
+          already and must be alerted by email to solve the issue, which is
+          probably the reality of the situation.
+        </p>
+      </h1>
+    )
+  }
 
   return (
     <>
@@ -46,6 +77,9 @@ export default function Main() {
             />
           ))}
         </div>
+        <center>
+          <p>Our IPFS node: {ipfsID}</p>
+        </center>
       </GlobalContext.Provider>
     </>
   )
@@ -74,5 +108,6 @@ async function fetchGlobals() {
     toast('failed to fetch globals: ' + err.message, {
       type: 'error'
     })
+    throw err
   }
 }

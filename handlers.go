@@ -11,9 +11,18 @@ import (
 )
 
 func getGlobals(w http.ResponseWriter, r *http.Request) {
+	info, err := ipfs.ID()
+	if err != nil {
+		log.Error().Err(err).Msg("ipfs node is offline?")
+		http.Error(w, "ipfs node is offline", 503)
+		return
+	}
+
 	json.NewEncoder(w).Encode(struct {
-		PriceGB int64 `json:"priceGB"`
-	}{s.PriceGB})
+		PriceGB       int64    `json:"priceGB"`
+		IPFSID        string   `json:"ipfsID"`
+		IPFSAddresses []string `json:"ipfsAddresses"`
+	}{s.PriceGB, info.ID, filterOutLocal(info.Addresses)})
 }
 
 func orderCreate(w http.ResponseWriter, r *http.Request) {

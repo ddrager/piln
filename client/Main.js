@@ -24,6 +24,17 @@ export default function Main() {
     if (objects) setObjects(objects)
   }
 
+  function connectRemote() {
+    if (ipfsAddresses && window.ipfs) {
+      ipfsAddresses.forEach(addr => {
+        window.ipfs.swarm.connect(
+          addr,
+          console.log
+        )
+      })
+    }
+  }
+
   useEffect(async () => {
     try {
       setGlobals(await fetchGlobals())
@@ -32,19 +43,6 @@ export default function Main() {
     }
   }, [])
   useEffect(loadObjects, [])
-  useEffect(
-    async () => {
-      if (ipfsAddresses && window.ipfs) {
-        ipfsAddresses.forEach(addr => {
-          window.ipfs.swarm.connect(
-            addr,
-            console.log
-          )
-        })
-      }
-    },
-    [ipfsAddresses]
-  )
 
   if (offline) {
     return (
@@ -61,9 +59,15 @@ export default function Main() {
 
   return (
     <>
-      <GlobalContext.Provider value={priceGB}>
+      <GlobalContext.Provider value={{priceGB, ipfsID, ipfsAddresses}}>
         <ToastContainer />
-        <AddPin cid={selectedCid} onAfterPaid={loadObjects} />
+        <AddPin
+          cid={selectedCid}
+          onAfterPaid={() => {
+            loadObjects()
+            connectRemote()
+          }}
+        />
         <Portal to="#price">{priceGB}</Portal>
         <div id="objects">
           {objects.map(o => (

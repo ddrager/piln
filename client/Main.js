@@ -81,9 +81,11 @@ export default function Main() {
             />
           ))}
         </div>
-        <center>
-          <p>Our IPFS node: {ipfsID}</p>
-        </center>
+        <Portal to="footer">
+          <center>
+            <p>Our IPFS node: {ipfsID}</p>
+          </center>
+        </Portal>
       </GlobalContext.Provider>
     </>
   )

@@ -2,6 +2,7 @@
 
 const prettyBytes = require('pretty-bytes')
 const fromNow = require('fromnow')
+const hashbow = require('hashbow')
 const uniq = require('array-uniq')
 
 import React, {useEffect, useState} from 'react' // eslint-disable-line no-unused-vars
@@ -29,7 +30,7 @@ export default function PinnedObject({
   }, [])
 
   return (
-    <div className="object">
+    <div className="object" style={{backgroundColor: hashbow(cid, 52, 96)}}>
       <h3>
         <a href={`https://ipfs.io/ipfs/${cid}`} target="_blank">
           {cid}

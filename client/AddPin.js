@@ -102,14 +102,14 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
         <span
           data-balloon-length="small"
           data-balloon-pos="left"
-          data-balloon="You decide how much you want to pay now, we'll only know how much time does it buy for the given object afterwards."
+          data-balloon="You decide how much you want to pay now, we'll only know how much time does it buy for the given object afterwards (unless you're using window,ipfs, in that case we can give you an approximation)."
         >
           Satoshis to pay:
         </span>{' '}
         <input
           type="number"
-          min="1"
           step="1"
+          min="1"
           value={amount}
           onChange={e => setAmount(e.target.value)}
         />
@@ -121,13 +121,13 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
         <span
           data-balloon-length="small"
           data-balloon-pos="left"
-          data-balloon="You can use 4 characters for each satoshi you pay, this is meant to identify the object for visitors or yourself in the future. Optional."
+          data-balloon="Optional. Meant to identify the object for visitors or yourself in the future. You can use up to 23 characters or 1 character for each satoshi you pay, which one is bigger."
         >
           Note to identify the object:
         </span>{' '}
         <input
           value={note}
-          maxLength={amount * 4}
+          maxLength={amount < 23 ? 23 : amount}
           onChange={e => setNote(e.target.value)}
         />
       </label>

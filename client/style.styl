@@ -76,6 +76,10 @@ header
   display flex
   flex-wrap wrap
 
+  .paid-waiting
+    background-color white
+    border dotted 5px black
+
   .object
     margin 15px
     padding 9px
@@ -91,13 +95,20 @@ header
     table
       width 100%
 
-    button
-      margin 15px
-      display block
-
     ul, li
       padding 0
       margin 0
+
+    .footer
+      display flex
+
+      a, button
+        margin 15px
+        display block
+        flex auto
+
+      a
+        line-height 2em
 
 footer
   margin-top 200px

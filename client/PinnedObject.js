@@ -31,11 +31,7 @@ export default function PinnedObject({
 
   return (
     <div className="object" style={{backgroundColor: hashbow(cid, 52, 96)}}>
-      <h3>
-        <a href={`https://ipfs.io/ipfs/${cid}`} target="_blank">
-          {cid}
-        </a>
-      </h3>
+      <h3>{cid}</h3>
       <table>
         <tbody>
           <tr>
@@ -91,7 +87,12 @@ export default function PinnedObject({
           </tr>
         </tbody>
       </table>
-      <button onClick={onSelect}>Extend lifespan</button>
+      <div className="footer">
+        <a href={`https://ipfs.io/ipfs/${cid}`} target="_blank">
+          Browse
+        </a>
+        <button onClick={onSelect}>Extend lifespan</button>
+      </div>
     </div>
   )
 }

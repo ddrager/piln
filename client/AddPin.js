@@ -9,6 +9,7 @@ import {QRCode} from 'react-qr-svg'
 import {toast} from 'react-toastify'
 
 import {GlobalContext} from './Main'
+import orderStore from './orderStore'
 
 export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
   let {priceGB} = useContext(GlobalContext)
@@ -179,14 +180,14 @@ function Invoice({
   useEffect(
     () => {
       if (paid) {
-        setTimeout(onAfterPaid, 20000)
+        setTimeout(onAfterPaid, 1000)
       }
     },
     [paid]
   )
 
   return (
-    <div id="invoice">
+    <div id="invoice" data-order={orderId}>
       {paid ? (
         <>
           <h1 className="paid">PAID</h1>
@@ -236,9 +237,8 @@ async function createOrder({cid, note, amount}) {
 
     let {invoice, order_id} = await res.json()
 
-    // save order id so this user will be able to edit his order
-    // later if it is given up.
-    localStorage.setItem(order_id, 1)
+    // save order id so this user will be able to see his order later
+    orderStore.add(order_id)
 
     return {invoice, order_id}
   } catch (err) {

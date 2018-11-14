@@ -8,6 +8,8 @@ import React, {useState, useEffect, useRef} from 'react' // eslint-disable-line 
 import Portal from './Portal'
 import PinnedObject from './PinnedObject'
 import AddPin from './AddPin'
+import PaidWaiting from './PaidWaiting'
+import orderStore from './orderStore'
 
 export const GlobalContext = React.createContext()
 
@@ -17,11 +19,13 @@ export default function Main() {
     priceGB: 1000000000
   })
   let [objects, setObjects] = useState([])
+  let [paidWaiting, setPaidWaiting] = useState([])
   let [selectedCid, select] = useState(undefined)
 
   async function loadObjects() {
     let objects = await fetchObjects()
     if (objects) setObjects(objects)
+    setPaidWaiting(orderStore.list())
   }
 
   function connectRemote() {
@@ -70,6 +74,15 @@ export default function Main() {
         />
         <Portal to="#price">{priceGB}</Portal>
         <div id="objects">
+          {paidWaiting.map(orderId => (
+            <PaidWaiting
+              key={orderId}
+              orderId={orderId}
+              onProcessed={() => {
+                loadObjects()
+              }}
+            />
+          ))}
           {objects.map(o => (
             <PinnedObject
               {...o}

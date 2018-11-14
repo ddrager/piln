@@ -20,6 +20,7 @@ type Object struct {
 type Payment struct {
 	OrderId   string `json:"order_id" db:"order_id"`
 	CID       string `json:"cid" db:"cid"`
+	Note      string `json:"note" db:"note"`
 	PaidAt    string `json:"paid_at" db:"paid_at"`
 	Amount    int    `json:"amount" db:"amount"`
 	Processed bool   `json:"processed" db:"processed"`
@@ -52,7 +53,7 @@ FROM objects AS o WHERE cid = $1
 func fetchPayment(orderId string) (*Payment, error) {
 	p := Payment{}
 	err = pg.Get(&p, `
-SELECT order_id, paid_at, amount, processed, tries, given_up
+SELECT order_id, cid, note, paid_at, amount, processed, tries, given_up
 FROM payments AS o WHERE order_id = $1
     `, orderId)
 	if err == sql.ErrNoRows {

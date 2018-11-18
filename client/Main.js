@@ -14,9 +14,9 @@ import orderStore from './orderStore'
 export const GlobalContext = React.createContext()
 
 export default function Main() {
-  let [offline, setOffline] = useState(false)
   let [{priceGB, ipfsID, ipfsAddresses}, setGlobals] = useState({
-    priceGB: 1000000000
+    priceGB: 1000000000,
+    ipfsID: 'temporarily offline'
   })
   let [objects, setObjects] = useState([])
   let [paidWaiting, setPaidWaiting] = useState([])
@@ -43,23 +43,10 @@ export default function Main() {
     try {
       setGlobals(await fetchGlobals())
     } catch (err) {
-      setOffline(true)
+      console.warn('IPFS node temporarily offline.')
     }
   }, [])
   useEffect(loadObjects, [])
-
-  if (offline) {
-    return (
-      <h1>
-        Our IPFS node is offline, so this service is not operational right now.
-        <p>
-          Please contact us at piln@alhur.es if you think we don't know that
-          already and must be alerted by email to solve the issue, which is
-          probably the reality of the situation.
-        </p>
-      </h1>
-    )
-  }
 
   return (
     <>

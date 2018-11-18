@@ -11,18 +11,21 @@ import (
 )
 
 func getGlobals(w http.ResponseWriter, r *http.Request) {
-	info, err := ipfs.ID()
-	if err != nil {
-		log.Error().Err(err).Msg("ipfs node is offline?")
-		http.Error(w, "ipfs node is offline", 503)
-		return
-	}
-
-	json.NewEncoder(w).Encode(struct {
+	globals := struct {
 		PriceGB       int64    `json:"priceGB"`
 		IPFSID        string   `json:"ipfsID"`
 		IPFSAddresses []string `json:"ipfsAddresses"`
-	}{s.PriceGB, info.ID, filterOutLocal(info.Addresses)})
+	}{s.PriceGB, "temporarily offline", make([]string, 0)}
+
+	info, err := ipfs.ID()
+	if err != nil {
+		log.Error().Err(err).Msg("ipfs node is offline?")
+	} else {
+		globals.IPFSID = info.ID
+		globals.IPFSAddresses = filterOutLocal(info.Addresses)
+	}
+
+	json.NewEncoder(w).Encode(globals)
 }
 
 func orderCreate(w http.ResponseWriter, r *http.Request) {

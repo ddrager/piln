@@ -71,17 +71,18 @@ VALUES ($1, $2, $3, $4)
 }
 
 func processPayments() error {
+	pg.Exec(`
+UPDATE payments
+SET given_up = true, processed = true
+WHERE tries > 20
+    `)
+
 	payments := make([]struct {
 		OrderId string `db:"order_id"`
 		CID     string `db:"cid"`
 		Amount  int64  `db:"amount"`
 	}, 0)
 	err = pg.Select(&payments, `
-WITH giveup AS (
-  UPDATE payments
-  SET given_up = true, processed = true
-  WHERE tries > 20
-)
 UPDATE payments
 SET tries = payments.tries + 1
 WHERE NOT processed

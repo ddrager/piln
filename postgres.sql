@@ -16,10 +16,11 @@ CREATE TABLE objects (
   lifespan interval
 );
 
-CREATE FUNCTION notes(objects) RETURNS text[] AS $$
+CREATE OR REPLACE FUNCTION notes(objects) RETURNS text[] AS $$
   SELECT coalesce(array_remove(array_agg(note), ''), '{}') FROM payments
   WHERE payments.cid = $1.cid
-    AND note IS NOT NULL;
+    AND note IS NOT NULL
+    AND processed AND NOT given_up;
 $$ LANGUAGE SQL;
 
 select * from objects;

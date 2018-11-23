@@ -103,17 +103,38 @@ RETURNING order_id, cid, amount
 		go func(orderId string, cid string, amount int64) {
 			log.Debug().Str("order_id", orderId).Int64("amount", amount).Str("cid", cid).
 				Msg("processing payment")
-			sizegb, err := pin(
-				cid,
-				float64(payment.Amount)/float64(s.PriceGB),
-			)
+
+			loginfo := log.Info().
+				Str("order_id", orderId).Int64("amount", amount).
+				Str("cid", cid)
+
+			sizegb, err := size(cid)
 			if err != nil {
+				jobs <- err
+				loginfo.Err(err).Msg("failed to get size")
+				return
+			}
+
+			loginfo = loginfo.Float64("sizegb", sizegb)
+
+			if sizegb > float64(payment.Amount)/float64(s.PriceGB) {
+				err = errors.New("object too big for the payment")
+			} else if sizegb > s.AbsoluteMaxSize {
+				err = errors.New("object absolutely too big")
+			}
+			if err != nil {
+				loginfo.Err(err).Msg("")
 				jobs <- err
 				return
 			}
-			log.Info().
-				Str("order_id", orderId).Int64("amount", amount).
-				Str("cid", cid).Float64("sizegb", sizegb).
+
+			err = pin(cid)
+			if err != nil {
+				loginfo.Err(err).Msg("pin failed")
+				jobs <- err
+				return
+			}
+			loginfo.Float64("sizegb", sizegb).
 				Msg("pinned")
 
 			duration := time.Hour * time.Duration(
@@ -136,20 +157,17 @@ ON CONFLICT (cid)
 		}(payment.OrderId, payment.CID, payment.Amount)
 	}
 
-	anyerr := make(chan error, 1)
+	allfinished := make(chan bool, 1)
 	go func() {
-		for err := range jobs {
-			if err != nil {
-				anyerr <- err
-				return
-			}
+		for _ = range jobs {
+
 		}
-		anyerr <- nil
+		allfinished <- true
 	}()
 
 	select {
-	case res := <-anyerr:
-		return res
+	case _ = <-allfinished:
+		return nil
 	case <-time.After(60 * time.Minute):
 		return errors.New("timeout")
 	}

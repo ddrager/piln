@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/c2h5oh/datasize"
@@ -14,20 +13,18 @@ func toCID(cid string) string {
 	return strings.TrimSpace(cid)
 }
 
-func pin(cid string, max float64) (sizegb float64, err error) {
+func size(cid string) (float64, error) {
 	stats, err := ipfs.ObjectStat(cid)
 	if err != nil {
-		return
+		return 0, err
 	}
 
-	sizegb = datasize.ByteSize(stats.CumulativeSize).GBytes()
-	if sizegb > max || sizegb > s.AbsoluteMaxSize {
-		err = errors.New("object too big")
-		return
-	}
+	size := datasize.ByteSize(stats.CumulativeSize).GBytes()
+	return size, nil
+}
 
-	err = ipfs.Pin(cid)
-	return
+func pin(cid string) error {
+	return ipfs.Pin(cid)
 }
 
 func unpin(cid string) error {

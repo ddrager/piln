@@ -18,8 +18,11 @@ export default function PaidWaiting({orderId, onProcessed}) {
         setPayment(payment)
       }, i * 5000)
 
-      // if the payment is processed, delete the pending stuff
-      if (payment && payment.processed && !payment.given_up) {
+      // if the payment was pinned, delete the pending stuff
+      if (
+        payment &&
+        (payment.status !== 'trying' || payment.status !== 'given_up')
+      ) {
         orderStore.remove(orderId)
         onProcessed()
       }
@@ -42,11 +45,11 @@ export default function PaidWaiting({orderId, onProcessed}) {
     return null
   }
 
-  let {cid, amount, note, paid_at, tries, given_up} = payment
+  let {cid, amount, note, paid_at, tries, status} = payment
 
   return (
-    <div className="object paid-waiting">
-      {given_up ? <p>given up</p> : <p>paid, not pinned yet</p>}
+    <div className={`object ${status}`}>
+      {status === 'given_up' ? <p>given up</p> : <p>paid, not pinned yet</p>}
       <table>
         <tbody>
           <tr>

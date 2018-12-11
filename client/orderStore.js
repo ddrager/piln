@@ -4,20 +4,30 @@ const localStorage = window.localStorage
 
 export default {
   add(oi) {
-    var orders = JSON.parse(localStorage.getItem('orders') || '[]')
-    orders.push(oi)
-    localStorage.setItem('orders', JSON.stringify(orders))
+    let orders = JSON.parse(localStorage.getItem('orders') || '[]')
+    var orderMap = makeMap(orders)
+    orderMap[oi] = true
+    localStorage.setItem('orders', JSON.stringify(Object.keys(orderMap)))
   },
 
   remove(oi) {
-    var orders = JSON.parse(localStorage.getItem('orders') || '[]')
-    let i = orders.indexOf(oi)
-    if (i === -1) return
-    orders.splice(i, 1)
-    localStorage.setItem('orders', JSON.stringify(orders))
+    let orders = JSON.parse(localStorage.getItem('orders') || '[]')
+    var orderMap = makeMap(orders)
+    delete orderMap[oi]
+    localStorage.setItem('orders', JSON.stringify(Object.keys(orderMap)))
   },
 
   list() {
-    return JSON.parse(localStorage.getItem('orders') || '[]')
+    let orders = JSON.parse(localStorage.getItem('orders') || '[]')
+    let orderMap = makeMap(orders)
+    return Object.keys(orderMap).sort()
   }
+}
+
+function makeMap(arr) {
+  var map = {}
+  for (let i = 0; i < arr.length; i++) {
+    map[arr[i]] = true
+  }
+  return map
 }

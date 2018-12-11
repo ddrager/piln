@@ -6,22 +6,24 @@ import React, {useEffect, useState} from 'react' // eslint-disable-line no-unuse
 import {toast} from 'react-toastify'
 import orderStore from './orderStore'
 
-export default function PaidWaiting({orderId, onProcessed}) {
-  let [payment, setPayment] = useState()
+export default function PaidWaiting({orderId, onProcessed, onReuseSelect}) {
+  let [payment, setPayment] = useState({})
   let [i, setI] = useState(1)
 
   useEffect(
     async () => {
-      setTimeout(async () => {
-        let payment = await fetchPayment(orderId)
-        setI(i + 1)
-        setPayment(payment)
-      }, i * 5000)
+      if (payment.status !== 'given_up') {
+        setTimeout(async () => {
+          setPayment(await fetchPayment(orderId))
+          setI(i + 1)
+        }, i * 5000)
+      }
 
       // if the payment was pinned, delete the pending stuff
       if (
         payment &&
-        (payment.status !== 'trying' || payment.status !== 'given_up')
+        payment.status &&
+        (payment.status !== 'trying' && payment.status !== 'given_up')
       ) {
         orderStore.remove(orderId)
         onProcessed()
@@ -45,11 +47,28 @@ export default function PaidWaiting({orderId, onProcessed}) {
     return null
   }
 
-  let {cid, amount, note, paid_at, tries, status} = payment
+  let {order_id, cid, amount, note, paid_at, tries, status} = payment
 
   return (
     <div className={`object ${status}`}>
-      {status === 'given_up' ? <p>given up</p> : <p>paid, not pinned yet</p>}
+      {status === 'given_up' ? (
+        <p>
+          given up{' '}
+          <button
+            data-id={order_id}
+            data-note={note}
+            data-amount={amount}
+            onClick={onReuseSelect}
+            data-balloon-length="small"
+            data-balloon-pos="bottom"
+            data-balloon="You can repurpose this failed order in a new pin request."
+          >
+            Reuse paid amount
+          </button>
+        </p>
+      ) : (
+        <p>paid, pinning in progress</p>
+      )}
       <table>
         <tbody>
           <tr>

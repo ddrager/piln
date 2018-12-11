@@ -18,6 +18,7 @@ export default function Main() {
     priceGB: 1000000000,
     ipfsID: 'temporarily offline'
   })
+  let [reusing, setReused] = useState({})
   let [objects, setObjects] = useState([])
   let [paidWaiting, setPaidWaiting] = useState([])
   let [selectedCid, select] = useState(undefined)
@@ -26,17 +27,6 @@ export default function Main() {
     let objects = await fetchObjects()
     if (objects) setObjects(objects)
     setPaidWaiting(orderStore.list())
-  }
-
-  function connectRemote() {
-    if (ipfsAddresses && window.ipfs) {
-      ipfsAddresses.forEach(addr => {
-        window.ipfs.swarm.connect(
-          addr,
-          console.log
-        )
-      })
-    }
   }
 
   useEffect(async () => {
@@ -54,19 +44,37 @@ export default function Main() {
         <ToastContainer />
         <AddPin
           cid={selectedCid}
+          reused={Object.keys(reusing)
+            .map(id => reusing[id])
+            .filter(x => x)}
+          onRemoveReused={e => {
+            e.preventDefault()
+            setReused({...reusing, [e.target.dataset.id]: null})
+          }}
           onAfterPaid={() => {
             loadObjects()
-            connectRemote()
+            setReused({})
           }}
         />
         <Portal to="#price">{priceGB}</Portal>
         <div id="objects">
-          {paidWaiting.map(orderId => (
+          {paidWaiting.filter(orderId => !reusing[orderId]).map(orderId => (
             <PaidWaiting
               key={orderId}
               orderId={orderId}
               onProcessed={() => {
                 loadObjects()
+              }}
+              onReuseSelect={e => {
+                e.preventDefault()
+                setReused({
+                  ...reusing,
+                  [e.target.dataset.id]: {
+                    id: e.target.dataset.id,
+                    note: e.target.dataset.note,
+                    amount: e.target.dataset.amount
+                  }
+                })
               }}
             />
           ))}

@@ -10,11 +10,12 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-const SEPARATOR = "|||"
+const SEPARATOR = "&^"
 
-func splitDescription(desc string) (string, string) {
-	s := strings.SplitN(desc, SEPARATOR, 2)
-	return s[0], s[1]
+func splitDescription(desc string) (cid string, orderIds []string, note string) {
+	s := strings.SplitN(desc, SEPARATOR, 3)
+	orderIds = strings.Split(s[1], ",")
+	return s[0], orderIds, s[2]
 }
 
 func isInvoicePaid(id string) bool {
@@ -34,8 +35,12 @@ func isInvoicePaid(id string) bool {
 	return "paid" == gjson.GetBytes(body, "data.status").String()
 }
 
-func makeInvoice(cid string, note string, amount int64) (invoice string, order_id string, err error) {
-	description := cid + SEPARATOR + note
+func makeInvoice(
+	cid string,
+	note string,
+	amount int64,
+	reusedOrders []string) (invoice string, order_id string, err error) {
+	description := cid + SEPARATOR + strings.Join(reusedOrders, ",") + SEPARATOR + note
 	callback_url := s.ServiceURL + "/callback/order"
 	order_id = cuid.New()
 

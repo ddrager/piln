@@ -6,7 +6,7 @@
 html
   margin 0
   padding 0
-  background-color #fff3ef
+  background-color white
 
 body
   margin 15px 1%
@@ -63,6 +63,24 @@ header
 
     input + *
       margin-left 6px
+
+  .reusing
+    display flex
+    flex-wrap wrap
+
+    & > *
+      max-width 100px
+
+    .note, .amount
+      white-space nowrap
+      text-overflow ellipsis
+      overflow hidden
+
+    .amount
+      text-align center
+
+    button
+      padding 0
 
   .error
     color red

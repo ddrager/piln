@@ -11,8 +11,13 @@ import {toast} from 'react-toastify'
 import {GlobalContext} from './Main'
 import orderStore from './orderStore'
 
-export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
-  let {priceGB} = useContext(GlobalContext)
+export default function AddPin({
+  cid: selectedCid = '',
+  reused = [],
+  onRemoveReused,
+  onAfterPaid
+}) {
+  let {priceGB, ipfsAddresses} = useContext(GlobalContext)
 
   let [o, setObject] = useState({cid: selectedCid})
   let [amount, setAmount] = useState(50)
@@ -25,6 +30,27 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
         if (err) setObject(o => ({...o, error: err.message}))
       })
     }
+  }
+
+  function connectRemote() {
+    if (ipfsAddresses && window.ipfs) {
+      ipfsAddresses.forEach(addr => {
+        window.ipfs.swarm.connect(
+          addr,
+          console.log
+        )
+      })
+    }
+  }
+
+  function afterPaid() {
+    setInvoice(null)
+    setOrderId(null)
+    setObject({})
+    setAmount(77)
+    setNote('')
+    connectRemote()
+    onAfterPaid()
   }
 
   useEffect(
@@ -46,18 +72,11 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
         orderId={orderId}
         cid={o.cid}
         amount={amount}
+        nreused={reused.length}
         note={note}
         invoice={invoice}
         setInvoice={setInvoice}
-        onAfterPaid={() => {
-          setInvoice(null)
-          setOrderId(null)
-          setObject({})
-          setAmount(77)
-          setNote('')
-
-          onAfterPaid()
-        }}
+        onAfterPaid={afterPaid}
       />
     )
   }
@@ -67,10 +86,23 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
       id="pin"
       onSubmit={async e => {
         e.preventDefault()
-        let {invoice, order_id} = await createOrder({cid: o.cid, amount, note})
-        if (invoice) {
+        let {invoice, order_id} = await createOrder({
+          cid: o.cid,
+          amount,
+          note,
+          reused_orders: reused.map(({id}) => id)
+        })
+
+        if (order_id) {
+          // success.
           setOrderId(order_id)
-          setInvoice(invoice)
+          if (invoice) {
+            // show invoice.
+            setInvoice(invoice)
+          } else {
+            // there's no invoice, it's already paid.
+            afterPaid()
+          }
         }
       }}
     >
@@ -110,7 +142,7 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
         <input
           type="number"
           step="1"
-          min="1"
+          min="0"
           value={amount}
           onChange={e => setAmount(e.target.value)}
         />
@@ -118,6 +150,26 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
           <div>time: {timeBought(amount, o.stats.CumulativeSize, priceGB)}</div>
         )}
       </label>
+      {reused.length === 0 ? null : (
+        <label
+          data-balloon-length="small"
+          data-balloon-pos="left"
+          data-balloon="The amount paid for this order will be reused in the next."
+        >
+          Reusing orders:
+          <div className="reusing">
+            {reused.map(({id, note, amount}) => (
+              <div key={id}>
+                <div className="note">{note}</div>
+                <div className="amount">{amount}</div>
+                <button data-id={id} onClick={onRemoveReused}>
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </label>
+      )}
       <label>
         <span
           data-balloon-length="small"
@@ -132,7 +184,9 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
           onChange={e => setNote(e.target.value)}
         />
       </label>
-      <button disabled={!o.cid || o.error || !amount}>Pin</button>
+      <button disabled={!o.cid || o.error || !amount || reused.length === 0}>
+        Pin
+      </button>
     </form>
   )
 }
@@ -140,6 +194,7 @@ export default function AddPin({cid: selectedCid = '', onAfterPaid}) {
 function Invoice({
   cid,
   amount,
+  nreused,
   note,
   orderId,
   invoice,
@@ -180,7 +235,7 @@ function Invoice({
   useEffect(
     () => {
       if (paid) {
-        setTimeout(onAfterPaid, 1000)
+        setTimeout(onAfterPaid, 10000)
       }
     },
     [paid]
@@ -202,7 +257,12 @@ function Invoice({
         <>
           <h2>Pay this invoice to pin your object</h2>
           <p>IPFS object: {cid}</p>
-          <p>Value: {amount} satoshis</p>
+          <p>
+            Value: {amount} satoshis
+            {nreused > 0
+              ? ` (plus ${nreused} reused order ${nreused === 1 ? '' : 's'})`
+              : ''}
+          </p>
           <p>Note: {note}</p>
           <QRCode
             bgColor="#FFFFFF"
@@ -226,11 +286,11 @@ function Invoice({
   )
 }
 
-async function createOrder({cid, note, amount}) {
+async function createOrder({cid, note, amount, reused_orders}) {
   try {
     let res = await fetch('/api/order', {
       method: 'POST',
-      body: JSON.stringify({cid, note, amount}),
+      body: JSON.stringify({cid, note, amount, reused_orders}),
       headers: {'Content-Type': 'application/json'}
     })
     if (!res.ok) throw new Error(await res.text())

@@ -2,8 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
-	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -63,12 +61,23 @@ FROM payments AS o WHERE order_id = $1
 	return &p, err
 }
 
-func savePayment(order_id, cid string, amount int, note string) error {
+func savePayment(order_id, cid string, paidAmount int, note string, orders []string) error {
 	_, err := pg.Exec(`
-INSERT INTO payments (order_id, cid, amount, note)
-VALUES ($1, $2, $3, $4)
-    `, order_id, cid, amount, note)
+WITH reused_orders AS (
+  UPDATE payments
+  SET status = 'repurposed'
+  WHERE status = 'given_up'
+  AND order_id = any($1)
+  RETURNING order_id, amount
+)
+INSERT INTO payments (order_id, cid, note, amount, recycling)
+VALUES (
+  $3,
+  $4,
+  $5,
+  (SELECT sum(amount) + $2 FROM reused_orders),
+  (SELECT array_agg(order_id) FROM reused_orders)
+)
+    `, pq.Array(orders), paidAmount, order_id, cid, note)
 	return err
-}
-
 }

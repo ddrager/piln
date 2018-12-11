@@ -17,7 +17,7 @@ CREATE TABLE objects (
 );
 
 CREATE OR REPLACE FUNCTION notes(objects) RETURNS text[] AS $$
-  SELECT coalesce(array_remove(array_agg(note), ''), '{}') FROM payments
+  SELECT coalesce(array_remove(array_agg(DISTINCT note), ''), '{}') FROM payments
   WHERE payments.cid = $1.cid
     AND note IS NOT NULL
     AND processed AND NOT given_up;
@@ -25,3 +25,5 @@ $$ LANGUAGE SQL;
 
 select * from objects;
 select * from payments order by paid_at;
+select * from payments where given_up;
+select * from payments where not processed;

@@ -8,7 +8,7 @@ import React, {useState, useEffect, useRef} from 'react' // eslint-disable-line 
 import Portal from './Portal'
 import PinnedObject from './PinnedObject'
 import AddPin from './AddPin'
-import PaidWaiting from './PaidWaiting'
+import NotPinnedObject from './NotPinnedObject'
 import orderStore from './orderStore'
 
 export const GlobalContext = React.createContext()
@@ -20,13 +20,13 @@ export default function Main() {
   })
   let [reusing, setReused] = useState({})
   let [objects, setObjects] = useState([])
-  let [paidWaiting, setPaidWaiting] = useState([])
+  let [paidWaiting, setNotPinnedObject] = useState([])
   let [selectedCid, select] = useState(undefined)
 
   async function loadObjects() {
     let objects = await fetchObjects()
     if (objects) setObjects(objects)
-    setPaidWaiting(orderStore.list())
+    setNotPinnedObject(orderStore.list())
   }
 
   useEffect(async () => {
@@ -59,7 +59,7 @@ export default function Main() {
         <Portal to="#price">{priceGB}</Portal>
         <div id="objects">
           {paidWaiting.filter(orderId => !reusing[orderId]).map(orderId => (
-            <PaidWaiting
+            <NotPinnedObject
               key={orderId}
               orderId={orderId}
               onProcessed={() => {

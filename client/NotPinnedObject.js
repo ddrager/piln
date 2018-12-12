@@ -6,7 +6,7 @@ import React, {useEffect, useState} from 'react' // eslint-disable-line no-unuse
 import {toast} from 'react-toastify'
 import orderStore from './orderStore'
 
-export default function PaidWaiting({orderId, onProcessed, onReuseSelect}) {
+export default function NotPinnedObject({orderId, onProcessed, onReuseSelect}) {
   let [payment, setPayment] = useState({})
   let [i, setI] = useState(1)
 
@@ -60,7 +60,7 @@ export default function PaidWaiting({orderId, onProcessed, onReuseSelect}) {
             data-amount={amount}
             onClick={onReuseSelect}
             data-balloon-length="small"
-            data-balloon-pos="bottom"
+            data-balloon-pos="right"
             data-balloon="You can repurpose this failed order in a new pin request."
           >
             Reuse paid amount

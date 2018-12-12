@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -33,40 +34,42 @@ RETURNING order_id, cid, amount
 	jobs := make(chan error, len(payments))
 	for _, payment := range payments {
 		go func(orderId string, cid string, amount int64) {
-			log.Debug().Str("order_id", orderId).Int64("amount", amount).Str("cid", cid).
-				Msg("processing payment")
+			logger := log.With().
+				Str("order_id", orderId).
+				Int64("amount", amount).
+				Str("cid", cid).Logger()
 
-			loginfo := log.Info().
-				Str("order_id", orderId).Int64("amount", amount).
-				Str("cid", cid)
+			logger.Debug().Msg("processing payment")
 
 			sizegb, err := size(cid)
 			if err != nil {
 				jobs <- err
-				loginfo.Err(err).Msg("failed to get size")
+				logger.Error().Err(err).Msg("failed to get size")
 				return
 			}
 
-			loginfo = loginfo.Float64("sizegb", sizegb)
+			logger = logger.With().Float64("sizegb", sizegb).Logger()
 
-			if sizegb > float64(payment.Amount)/float64(s.PriceGB) {
-				err = errors.New("object too big for the payment")
+			if sizegb > float64(amount)/float64(s.PriceGB) {
+				err = fmt.Errorf("object too big for the payment: %v > %v / %v",
+					sizegb, amount, s.PriceGB)
 			} else if sizegb > s.AbsoluteMaxSize {
-				err = errors.New("object absolutely too big")
+				err = fmt.Errorf("object absolutely too big: %v > %v",
+					sizegb, s.AbsoluteMaxSize)
 			}
 			if err != nil {
-				loginfo.Err(err).Msg("")
+				logger.Error().Err(err).Msg("")
 				jobs <- err
 				return
 			}
 
 			err = pin(cid)
 			if err != nil {
-				loginfo.Err(err).Msg("pin failed")
+				logger.Error().Err(err).Msg("pin failed")
 				jobs <- err
 				return
 			}
-			loginfo.Float64("sizegb", sizegb).
+			logger.Error().Float64("sizegb", sizegb).
 				Msg("pinned")
 
 			duration := time.Hour * time.Duration(

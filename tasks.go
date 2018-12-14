@@ -69,7 +69,7 @@ RETURNING order_id, cid, amount
 				jobs <- err
 				return
 			}
-			logger.Error().Float64("sizegb", sizegb).
+			logger.Info().Float64("sizegb", sizegb).
 				Msg("pinned")
 
 			duration := time.Hour * time.Duration(

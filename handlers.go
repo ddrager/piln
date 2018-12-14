@@ -80,6 +80,12 @@ func orderCreate(w http.ResponseWriter, r *http.Request) {
 				Str("cid", cid).
 				Msg("error saving payment with just reused orders.")
 		}
+
+		go func() {
+			err := processPayments()
+			log.Error().Err(err).
+				Msg("failed to process payments after getting pure-reuse order")
+		}()
 	} else {
 		// the process will continue on the webhook we'll get from opennode
 		invoice, order_id, err = makeInvoice(cid, note, amount, orders)

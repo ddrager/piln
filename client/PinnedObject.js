@@ -31,7 +31,7 @@ export default function PinnedObject({
   }, [])
 
   return (
-    <div className="object" style={{backgroundColor: hashbow(cid, 52, 96)}}>
+    <div className="object" style={{backgroundColor: hashbow(cid, 59, 70)}}>
       <h3>{cid}</h3>
       <table>
         <tbody>

@@ -39,9 +39,18 @@ RETURNING order_id, cid, amount
 				Int64("amount", amount).
 				Str("cid", cid).Logger()
 
+			var err error
+			var sizegb float64
+
 			logger.Debug().Msg("processing payment")
 
-			sizegb, err := size(cid)
+			if o, err := fetchObject(cid); err == nil && o != nil {
+				logger.Info().Msg("object already pinned. no need to pin again.")
+				sizegb = o.SizeGB
+				goto savingOnDatabase
+			}
+
+			sizegb, err = size(cid)
 			if err != nil {
 				jobs <- err
 				logger.Error().Err(err).Msg("failed to get size")
@@ -72,6 +81,7 @@ RETURNING order_id, cid, amount
 			logger.Info().Float64("sizegb", sizegb).
 				Msg("pinned")
 
+		savingOnDatabase:
 			duration := time.Hour * time.Duration(
 				float64(amount)/float64(s.PriceGB/24)/sizegb,
 			)

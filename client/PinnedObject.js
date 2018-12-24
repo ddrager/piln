@@ -24,6 +24,7 @@ export default function PinnedObject({
         .findprovs(cid)
         .catch(err => console.warn('error finding provs for ' + cid, err))
         .then(peerInfos => {
+          if (!peerInfos) return
           setProvs(uniq(peerInfos.map(p => p.ID).filter(x => x)))
         })
     }

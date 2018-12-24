@@ -115,7 +115,7 @@ export default function AddPin({
           IPFS hash:
         </span>{' '}
         <input
-          value={o.cid}
+          value={o.cid || ''}
           onChange={e => setObject({cid: e.target.value})}
           onBlur={fetchStats}
         />
@@ -184,7 +184,11 @@ export default function AddPin({
           onChange={e => setNote(e.target.value)}
         />
       </label>
-      <button disabled={!o.cid || o.error || !amount || reused.length === 0}>
+      <button
+        disabled={
+          !o.cid || o.error || (parseInt(amount) === 0 && reused.length === 0)
+        }
+      >
         Pin
       </button>
     </form>

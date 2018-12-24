@@ -75,8 +75,8 @@ VALUES (
   $3,
   $4,
   $5,
-  (SELECT sum(amount) + $2 FROM reused_orders),
-  (SELECT array_agg(order_id) FROM reused_orders)
+  (SELECT coalesce(sum(amount), 0) + $2 FROM reused_orders),
+  (SELECT coalesce(array_agg(order_id), '{}'::text[]) FROM reused_orders)
 )
     `, pq.Array(orders), paidAmount, order_id, cid, note)
 	return err

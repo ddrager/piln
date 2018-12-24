@@ -43,11 +43,11 @@ export default function NotPinnedObject({orderId, onProcessed, onReuseSelect}) {
     [i]
   )
 
-  if (!payment) {
+  let {order_id, cid, amount, note, paid_at, tries, status} = payment
+
+  if (!order_id) {
     return null
   }
-
-  let {order_id, cid, amount, note, paid_at, tries, status} = payment
 
   return (
     <div className={`object ${status}`}>

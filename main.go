@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dghubble/sling"
+	"github.com/gobuffalo/packr"
 	"github.com/gorilla/mux"
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/jmoiron/sqlx"
@@ -58,13 +59,11 @@ func main() {
 		log.Fatal().Err(err).Msg("couldn't connect to postgres")
 	}
 
+	// static assets
+	box := packr.NewBox("./static")
+
 	// define routes
 	r = mux.NewRouter()
-	r.Path("/favicon.ico").Methods("GET").HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "./public/icon.png")
-			return
-		})
 	r.Path("/api/globals").Methods("GET").HandlerFunc(getGlobals)
 	r.Path("/api/order").Methods("POST").HandlerFunc(orderCreate)
 	r.Path("/api/order/{orderId}").Methods("GET").HandlerFunc(orderStatus)
@@ -72,7 +71,7 @@ func main() {
 	r.Path("/api/object/{cid}").Methods("GET").HandlerFunc(getObject)
 	r.Path("/callback/order").Methods("POST").HandlerFunc(paymentCallback)
 	r.Path("/cron/periodic").Methods("POST").HandlerFunc(periodicJob)
-	r.PathPrefix("/").Methods("GET").Handler(http.FileServer(http.Dir("./static")))
+	r.PathPrefix("/").Methods("GET").Handler(http.FileServer(box))
 
 	// start the server
 	srv := &http.Server{

@@ -1,9 +1,8 @@
 {
   "dependencies": {
-    "array-uniq": "^2.0.0",
     "fromnow": "^3.0.0",
     "hashbow": "^1.1.1",
-    "pretty-bytes": "^5.1.0",
+    "prettier-bytes": "^1.0.4",
     "react": "^16.7.0-alpha.0",
     "react-dom": "^16.7.0-alpha.0",
     "react-qr-svg": "^2.1.0",
@@ -17,7 +16,8 @@
           "sourceMaps": true,
           "sourceMapsAbsolute": true
         }
-      ]
+      ],
+      "envify"
     ]
   },
   "devDependencies": {

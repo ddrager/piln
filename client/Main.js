@@ -29,12 +29,12 @@ export default function Main() {
     setNotPinnedObject(orderStore.list())
   }
 
-  useEffect(async () => {
-    try {
-      setGlobals(await fetchGlobals())
-    } catch (err) {
-      console.warn('IPFS node temporarily offline.')
-    }
+  useEffect(() => {
+    fetchGlobals()
+      .then(setGlobals)
+      .catch(err => {
+        console.warn('IPFS node temporarily offline.', err)
+      })
   }, [])
   useEffect(loadObjects, [])
 

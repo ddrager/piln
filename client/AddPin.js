@@ -2,7 +2,7 @@
 
 const fetch = window.fetch
 const fromNow = require('fromnow')
-const prettyBytes = require('pretty-bytes')
+const prettyBytes = require('prettier-bytes')
 
 import React, {useState, useEffect, useContext} from 'react' // eslint-disable-line no-unused-vars
 import {QRCode} from 'react-qr-svg'

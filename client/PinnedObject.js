@@ -1,11 +1,12 @@
 /** @format */
 
-const prettyBytes = require('pretty-bytes')
+const prettyBytes = require('prettier-bytes')
 const fromNow = require('fromnow')
 const hashbow = require('hashbow')
-const uniq = require('array-uniq')
 
 import React, {useEffect, useState} from 'react' // eslint-disable-line no-unused-vars
+
+import {uniq} from './helpers'
 
 export default function PinnedObject({
   cid,

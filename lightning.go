@@ -10,7 +10,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-const SEPARATOR = "&^"
+const SEPARATOR = " ← "
 
 func splitDescription(desc string) (cid string, orderIds []string, note string) {
 	s := strings.SplitN(desc, SEPARATOR, 3)

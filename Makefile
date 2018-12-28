@@ -1,7 +1,7 @@
 all: static/bundle.js static/style.css static/ReactToastify.min.css
 	go build
 
-prod: piln static/bundle.min.js static/style.min.css static/ReactToastify.min.css
+prod: static/bundle.min.js static/style.min.css static/ReactToastify.min.css
 	mv static/bundle.min.js static/bundle.js
 	mv static/style.min.css static/style.css
 	packr build

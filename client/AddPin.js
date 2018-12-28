@@ -255,7 +255,10 @@ function Invoice({
             We'll try to fetch from the IPFS network for a while and as soon as
             we're successful it will show up in this page.
           </p>
-          <p>If it fails a lot we'll give up.</p>
+          <p>
+            If it fails a lot we'll give up and you'll be able to redirect the
+            funds to a different pin.
+          </p>
         </>
       ) : (
         <>

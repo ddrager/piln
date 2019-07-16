@@ -10,8 +10,11 @@ export default function NotPinnedObject({orderId, onProcessed, onReuseSelect}) {
   let [payment, setPayment] = useState({})
   let [i, setI] = useState(1)
 
+	console.log("orderId, onProcessed, onReuseSelect",orderId,onProcessed,onReuseSelect)
+
   useEffect(
-    async () => {
+    () => {
+	async function getPayment() {
       if (payment.status !== 'given_up') {
         setTimeout(async () => {
           setPayment(await fetchPayment(orderId))
@@ -39,11 +42,12 @@ export default function NotPinnedObject({orderId, onProcessed, onReuseSelect}) {
           onProcessed()
         }
       }
-    },
-    [i]
-  )
+    }
+    getPayment();
+    }, [i])
 
   if (!payment || !payment.order_id) {
+	  console.log("no payment or no payment order id",payment)
     return null
   }
 

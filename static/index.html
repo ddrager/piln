@@ -5,48 +5,27 @@
 <title>piln - lightning network IPFS pins</title>
 <meta name="description" content="pin stuff to ipfs with lightning network payments">
 
+<link rel="stylesheet" href="/ReactToastify.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/balloon-css/0.5.0/balloon.min.css">
 <link rel="stylesheet" href="/style.css">
 
 <body>
   <header>
     <h1>piln</h1>
     <aside>
-      <p>Piln was a prepaid <a href="https://ipfs.io/">IPFS</a> pinning service you could use anonymously and instantaneously with the Bitcoin payments over the Lightning Network. It is closed for new pins since January 8, 2019. Objects that were pinned until that day are now stored on <a href=https://www.eternum.io/>Eternum</a>, a reliable IPFS pinning service.</p>
-      <p>The reason for the shutdown is that IPFS is a terrible technology and shouldn't be used or relied upon by anyone. If you want you can host your own Piln, the code is on <a href=https://github.com/fiatjaf/piln>GitHub</a>, but I really don't recommend it.</p>
-      <p>Thank you very much for your time and support.</p>
+      <p>Piln is a prepaid <a href="https://ipfs.io/">IPFS</a> pinning service, it will pin any object for any period of time, given the amount you pay. You can add credits to any object to extend the time it will stay pinned. The list of currently pinned objects is public and everyone can extend the pinning time of any object. Nothing can be unpinned.</p>
+      <p>There are no registrations and payments are in Bitcoin over the <a href="https://lightning.network/">Lightning Network</a>.
+      <p>The price is the cheapest in the market, at <b><span id="price"></span> satoshis per gigabyte per day</b>!</p>
+      <p>Since you can pay as much as you want and the pinned objects can have any arbitrary size, you have to do some calculation (calculation is done automatically if you have <a href="https://github.com/ipfs-shipyard/ipfs-companion">window.ipfs</a> enabled in your browser). If you pay less than a day's worth of the selected object your request will be rejected.</p>
     </aside>
+  </header>
 
-  <p>What follows now is the list of objects that were paid for here and preserved with their notes:</p>
-
-  <ul id="app">
-    <li><a href=https://ipfs.io/ipfs/QmZnkbuVmrbjBwwaz31kvz7a7xTCRRexVKZgUkyTkVXo4R>no censorship permitted</a></li>
-    <li><a href=https://ipfs.io/ipfs/QmVKitSuVd4kUEYEtfmzooP93bUDXPzwfSqHMKR1CVBvJU>The Earth Plane By Eric Dubay</a></li>
-    <li><a href=https://ipfs.io/ipfs/QmW7FinCA2Wf5FbL3qdY9v7jFY9KyqzTa9sfX921VTH3TT>Reseach about Eric Dubay</a></li>
-    <li><a href=https://ipfs.io/ipfs/QmZuyCDGqBtrGzXzJWkyHzaoYgVLfFUU7muCYqLgh42HNN>mountain</a></li>
-    <li><a href=https://ipfs.io/ipfs/QmVJt5Hx3q8jTuXz3tSYi9ENaPyu5BgBPyGsgtAvAZ1poV>encryption key HBLbLPwFeFB1hLmuZRQ2dqkLD5Xtvf2LJZn</a></li>
-    <li><a href=https://ipfs.io/ipfs/QmP1dMcLyhVVAPpDnR7EbztZGdCLND4KWNpBMFWEiceoFq>meghaA</a></li>
-    <li><a href=https://ipfs.io/ipfs/Qme5hKUMfBECzZvqfGxvpDgoeZsiKpk9WLXZjAk74ypuwN>lightning network paper</a></li>
-    <li><a href=https://ipfs.io/ipfs/QmbB25uo7qeZwAyd1ZdxHrXbEVZMVnQiVCY4q39XiGb8it>ln</a></li>
-  </ul>
+  <div id="app"></div>
 
   <footer>
-    <p>This terrible website was once provided by <a href="https://alhur.es/">alhures software</a>. 
+    <p><a href="https://alhur.es/">alhures software</a>, 2018. <a href="/terms.txt">Terms of service</a> and <a href="/privacy.txt">Privacy Policy</a>.</p>
   </footer>
 </body>
 
-<script>;(function (d, s, c) {
-  var x, h, n = Date.now()
-  tc = function (p) {
-    m = s.getItem('_tcx') > n ? s.getItem('_tch') : 'clavicula-rubeola'
-    x = new XMLHttpRequest()
-    x.addEventListener('load', function () {
-      if (x.status == 200) {
-        s.setItem('_tch', x.responseText)
-        s.setItem('_tcx', n + 14400000)
-      }
-    })
-    x.open('GET', 'https://visitantes.alhur.es/'+m+'.xml?r='+d.referrer+'&c='+c+(p?'&p='+p:''))
-    x.send()
-  }
-  tc()
-})(document, localStorage, '5wk2h8vr');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
+<script src="/bundle.js"></script>

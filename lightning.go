@@ -14,6 +14,14 @@ const SEPARATOR = " ← "
 
 func splitDescription(desc string) (cid string, orderIds []string, note string) {
 	s := strings.SplitN(desc, SEPARATOR, 3)
+
+	log.Warn().Int("s",len(s)).Msg("Size of split string s")
+
+	if len(s) < 2 {
+		log.Warn().Str("description", desc).Err(err).Msg("got confusing description")
+		return "", []string{"none"}, desc
+	}
+
 	orderIds = strings.Split(s[1], ",")
 	return s[0], orderIds, s[2]
 }
@@ -40,8 +48,12 @@ func makeInvoice(
 	note string,
 	amount int64,
 	reusedOrders []string) (invoice string, order_id string, err error) {
+		log.Info().Msg("in makeInvoice")
 	description := cid + SEPARATOR + strings.Join(reusedOrders, ",") + SEPARATOR + note
 	callback_url := s.ServiceURL + "/callback/order"
+
+	log.Info().Str("callback_url", callback_url).Msg("makeInvoice callback")
+
 	order_id = cuid.New()
 
 	req, _ := on.Post("/v1/charges").BodyJSON(struct {

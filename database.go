@@ -31,11 +31,12 @@ func fetchObjects() (oo []Object, err error) {
 	err = pg.Select(&oo, `
 SELECT cid, sizegb, pinned_at, pinned_at + lifespan AS ends_at, notes(o)
 FROM objects AS o
-WHERE pinned_at + lifespan > now()
 ORDER BY ends_at ASC
     `)
 	return
 }
+// WHERE pinned_at + lifespan > now()
+
 
 func fetchObject(cid string) (*Object, error) {
 	o := Object{}
